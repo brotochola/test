@@ -1,5 +1,5 @@
-import { Graphics } from "../pixi.min.mjs";
-import { config } from "../config.js";
+import { Graphics } from "./vendor/pixi.min.mjs";
+import { config } from "./config.js";
 import { GameObject } from "./GameObject.js";
 
 export class Box extends GameObject {
@@ -30,8 +30,10 @@ export class Box extends GameObject {
     const ppm = config.world.pixelsPerMeter;
     const w = options.hx * ppm * 2;
     const h = options.hy * ppm * 2;
-    const view = new Graphics().rect(-w / 2, -h / 2, w, h).fill(options.color);
 
-    super(game, body, view);
+    super(game, body);
+
+    this.view = new Graphics().rect(-w / 2, -h / 2, w, h).fill(options.color);
+    this.container.addChild(this.view);
   }
 }

@@ -1,22 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <title>simula.ad</title>
-    <style>
-      html,
-      body {
-        margin: 0;
-        background: #000;
-        overflow: hidden;
-      }
-      canvas {
-        display: block;
-      }
-    </style>
-  </head>
-  <body>
-    <script src="liquidfun.min.js"></script>
-    <script type="module" src="src/main.js"></script>
-  </body>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>simula.ad</title>
+  <style>
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      background: #000;
+      overflow: hidden;
+    }
+
+    canvas {
+      position: absolute;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <script src="src/vendor/liquidfun.min.js"></script>
+  <script type="module" src="src/main.js"></script>
+</body>
 </html>
