@@ -1,6 +1,6 @@
-import { Graphics } from './vendor/pixi.min.mjs';
-import { config } from './config.js';
-import { GameObject } from './GameObject.js';
+import { Graphics } from "./vendor/pixi.min.mjs";
+import { config } from "./config.js";
+import { GameObject } from "./GameObject.js";
 
 export class Faucet extends GameObject {
   constructor(game, options) {

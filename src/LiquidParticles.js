@@ -15,7 +15,8 @@ export class LiquidParticles {
     this._count = 0;
     this.texture = makeGradientTexture(config.particles.textureSize);
     this.system = createParticleSystem(game.world);
-    this._pd = null;
+    this._circle = null;
+    this._pgd = null;
 
     this.root = new Container();
     this.root.filters = [createMetaballFilter()];
@@ -42,18 +43,23 @@ export class LiquidParticles {
   emit(x, y, vx, vy, color) {
     if (this._count >= config.particles.maxCount) return;
     const lf = window.liquidfun;
-    if (!this._pd) {
-      this._pd = new lf.b2ParticleDef();
-      this._pd.color = new lf.b2ParticleColor();
-      this._pd.group = 0;
+    // ponytail: this port's CreateParticle does def.group = (b2ParticleGroup*)&group
+    // (stack double as a group) → RotateBuffer on garbage indices, tab freeze.
+    // Circle CreateParticleGroup sets group = NULL. stride = 2*radius → 1 particle.
+    if (!this._pgd) {
+      this._circle = new lf.b2CircleShape();
+      this._circle.radius = config.particles.radius;
+      this._pgd = new lf.b2ParticleGroupDef();
+      this._pgd.shape = this._circle;
+      this._pgd.stride = config.particles.radius * 2;
     }
-    const pd = this._pd;
-    pd.color.Set(color[0], color[1], color[2], color[3]);
-    pd.flags = particleFlags(lf);
-    pd.position.Set(x, y);
-    pd.velocity.Set(vx, vy);
-    this.system.CreateParticle(pd);
-    this._count++;
+    const pgd = this._pgd;
+    pgd.flags = particleFlags(lf);
+    pgd.color.Set(color[0], color[1], color[2], color[3]);
+    pgd.position.Set(x, y);
+    pgd.linearVelocity.Set(vx, vy);
+    this.system.CreateParticleGroup(pgd);
+    this._count = this.system.GetPositionBuffer().length / 2;
   }
 
   ensurePool(count) {
