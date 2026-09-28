@@ -1,4 +1,11 @@
-import { Application, Assets, Container, Graphics, Text } from "./vendor/pixi.min.mjs";
+import {
+  Application,
+  Assets,
+  Container,
+  Graphics,
+  Sprite,
+  Text,
+} from "./vendor/pixi.min.mjs";
 import { config } from "./config.js";
 import { Box } from "./Box.js";
 import { Faucet } from "./Faucet.js";
@@ -11,6 +18,7 @@ export class Game {
     window.game = this; //debug
     this.app = new Application();
     this.mainContainer = new Container();
+    this.mainContainer.sortableChildren = true;
     this.objects = [];
     this.world = null;
     this.liquid = null;
@@ -33,8 +41,20 @@ export class Game {
       preference: config.app.preference,
       antialias: config.app.antialias,
     });
-    await Assets.load(new URL("./assets/flask1.png", import.meta.url).href);
+
+    globalThis.__PIXI_APP__ = this.app;
+    const bgSrc = new URL("./assets/bg.jpg", import.meta.url).href;
+    await Assets.load([
+      bgSrc,
+      new URL("./assets/flask1.png", import.meta.url).href,
+      new URL("./assets/flask2.png", import.meta.url).href,
+    ]);
     document.body.appendChild(this.app.canvas);
+    const bg = Sprite.from(bgSrc);
+    bg.width = config.app.width;
+    bg.height = config.app.height;
+    bg.zIndex = config.zIndex.bg;
+    this.mainContainer.addChild(bg);
     this.app.stage.addChild(this.mainContainer);
     this.layout();
     window.addEventListener("resize", this._onResize);
@@ -46,6 +66,7 @@ export class Game {
     window.world = this.world;
 
     this.debugGfx = new Graphics();
+    this.debugGfx.zIndex = config.zIndex.debug;
     this.mainContainer.addChild(this.debugGfx);
     this.debugHud = new Text({
       text: "",
@@ -78,7 +99,6 @@ export class Game {
     this.liquid = new LiquidParticles(this);
     for (let i = 0; i < flasks.length; i++) {
       const flask = flasks[i];
-      this.mainContainer.addChild(flask.container);
       if (flask.amount > 0) {
         this.liquid.fillFlask(
           flask.body,
@@ -86,21 +106,24 @@ export class Game {
           flask.innerH,
           flask.amount,
           config.flask.liquidColor,
+          flask.fillX,
+          flask.fillY,
         );
       }
     }
 
     const faucets = spec.faucets ?? [];
     for (let i = 0; i < faucets.length; i++) new Faucet(this, faucets[i]);
-    this.mainContainer.addChild(this.debugGfx);
   }
 
   clearLevel() {
     const world = this.world;
     const objects = this.objects;
     for (let i = 0; i < objects.length; i++) {
-      world.DestroyBody(objects[i].body);
-      objects[i].container.destroy();
+      const obj = objects[i];
+      if (obj.body) world.DestroyBody(obj.body);
+      if (obj.destroy) obj.destroy();
+      else obj.container.destroy();
     }
     objects.length = 0;
     if (this.liquid) {

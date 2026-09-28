@@ -45,6 +45,7 @@ export class Box extends GameObject {
     );
 
     super(game, body);
+    this.container.zIndex = config.zIndex.box;
 
     this.view = new Graphics()
       .rect(-sprite.w / 2, -sprite.h / 2, sprite.w, sprite.h)

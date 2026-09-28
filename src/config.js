@@ -7,7 +7,7 @@ export const config = {
     antialias: false,
   },
   game: {
-    debug: true,
+    debug: !true,
   },
   world: {
     gravityX: 0,
@@ -56,6 +56,14 @@ export const config = {
     fillAlpha: 0.78,
     padding: 0,
   },
+  zIndex: {
+    bg: 0,
+    liquid: 1,
+    box: 2,
+    faucet: 2,
+    flask: 2,
+    debug: 3,
+  },
   faucet: {
     hx: 0.22,
     hy: 0.45,
@@ -63,11 +71,40 @@ export const config = {
     speed: 6,
   },
   flask: {
-    innerWidth: 4.2,
-    innerHeight: 5.2,
-    thickness: 0.4,
-    color: 0x8a9bb0,
+    width: 5,
     liquidColor: [120, 190, 255, 255],
+    types: {
+      1: {
+        src: "flask1.png",
+        w: 303,
+        h: 414,
+        boxes: [
+          [0, 124, 16, 378],
+          [287, 124, 303, 378],
+          [16, 368, 287, 408],
+          [33, 18, 55, 140],
+          [248, 18, 270, 140],
+          [0, 110, 55, 150],
+          [248, 110, 303, 150],
+        ],
+        fill: [20, 150, 283, 365],
+      },
+      2: {
+        src: "flask2.png",
+        w: 356,
+        h: 454,
+        boxes: [
+          [110, 15, 128, 155],
+          [216, 15, 236, 155],
+          [16, 385, 340, 440],
+        ],
+        slopes: [
+          { x0: 119, y0: 145, x1: 8, y1: 390, thick: 16 },
+          { x0: 226, y0: 145, x1: 345, y1: 390, thick: 16 },
+        ],
+        fill: [130, 160, 220, 380],
+      },
+    },
   },
   debug: {
     hudFill: 0xffffff,

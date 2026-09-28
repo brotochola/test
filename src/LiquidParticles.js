@@ -33,6 +33,7 @@ export class LiquidParticles {
     });
     this.container.blendMode = config.particles.blendMode;
     this.root.addChild(this.container);
+    this.root.zIndex = config.zIndex.liquid;
     game.mainContainer.addChild(this.root);
   }
 
@@ -40,14 +41,14 @@ export class LiquidParticles {
     return this._count;
   }
 
-  fillFlask(body, innerW, innerH, count, color) {
+  fillFlask(body, innerW, innerH, count, color, ox = 0, oy = 0) {
     const room = config.particles.maxCount - this._count;
     if (room <= 0 || count <= 0) return;
     const gap = config.particles.radius * 2;
     const pts = fillPoints(innerW, innerH, Math.min(count, room), gap);
     const local = new window.liquidfun.b2Vec2(0, 0);
     for (let i = 0; i < pts.length; i++) {
-      local.Set(pts[i].x, pts[i].y);
+      local.Set(pts[i].x + ox, pts[i].y + oy);
       const world = body.GetWorldPoint(local);
       this.emit(world.x, world.y, 0, 0, color);
     }
