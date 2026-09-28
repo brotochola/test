@@ -1,9 +1,10 @@
-import { Application, Container, Graphics, Text } from "./vendor/pixi.min.mjs";
+import { Application, Assets, Container, Graphics, Text } from "./vendor/pixi.min.mjs";
 import { config } from "./config.js";
 import { Box } from "./Box.js";
 import { Faucet } from "./Faucet.js";
 import { Flask } from "./Flask.js";
 import { LiquidParticles } from "./LiquidParticles.js";
+import { DemoLevel } from "./levels/DemoLevel.js";
 
 export class Game {
   constructor() {
@@ -32,6 +33,7 @@ export class Game {
       preference: config.app.preference,
       antialias: config.app.antialias,
     });
+    await Assets.load(new URL("./assets/flask1.png", import.meta.url).href);
     document.body.appendChild(this.app.canvas);
     this.app.stage.addChild(this.mainContainer);
     this.layout();
@@ -42,16 +44,6 @@ export class Game {
       new lf.b2Vec2(config.world.gravityX, config.world.gravityY),
     );
     window.world = this.world;
-
-    new Box(this, { ...config.demo.floor, type: lf.b2_staticBody });
-    new Box(this, { ...config.demo.leftWall, type: lf.b2_staticBody });
-    new Box(this, { ...config.demo.rightWall, type: lf.b2_staticBody });
-    new Box(this, config.demo.crate);
-    new Flask(this, config.demo.flask);
-
-    this.liquid = new LiquidParticles(this);
-    const faucets = config.demo.faucets;
-    for (let i = 0; i < faucets.length; i++) new Faucet(this, faucets[i]);
 
     this.debugGfx = new Graphics();
     this.mainContainer.addChild(this.debugGfx);
@@ -67,7 +59,55 @@ export class Game {
     this.debugHud.visible = this.debug;
     this.app.stage.addChild(this.debugHud);
 
+    this.loadLevel(new DemoLevel());
     this.app.ticker.add((ticker) => this.tick(ticker));
+  }
+
+  loadLevel(level) {
+    this.clearLevel();
+    const spec = level.config;
+    const boxes = level.enclosure().concat(spec.boxes ?? []);
+    for (let i = 0; i < boxes.length; i++) new Box(this, boxes[i]);
+
+    const flaskSpecs = spec.flasks ?? [];
+    const flasks = [];
+    for (let i = 0; i < flaskSpecs.length; i++) {
+      flasks.push(new Flask(this, flaskSpecs[i]));
+    }
+
+    this.liquid = new LiquidParticles(this);
+    for (let i = 0; i < flasks.length; i++) {
+      const flask = flasks[i];
+      this.mainContainer.addChild(flask.container);
+      if (flask.amount > 0) {
+        this.liquid.fillFlask(
+          flask.body,
+          flask.innerW,
+          flask.innerH,
+          flask.amount,
+          config.flask.liquidColor,
+        );
+      }
+    }
+
+    const faucets = spec.faucets ?? [];
+    for (let i = 0; i < faucets.length; i++) new Faucet(this, faucets[i]);
+    this.mainContainer.addChild(this.debugGfx);
+  }
+
+  clearLevel() {
+    const world = this.world;
+    const objects = this.objects;
+    for (let i = 0; i < objects.length; i++) {
+      world.DestroyBody(objects[i].body);
+      objects[i].container.destroy();
+    }
+    objects.length = 0;
+    if (this.liquid) {
+      world.DestroyParticleSystem(this.liquid.system);
+      this.liquid.root.destroy();
+      this.liquid = null;
+    }
   }
 
   layout() {

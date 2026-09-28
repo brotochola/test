@@ -7,7 +7,7 @@ export const config = {
     antialias: false,
   },
   game: {
-    debug: false,
+    debug: true,
   },
   world: {
     gravityX: 0,
@@ -25,6 +25,11 @@ export const config = {
     staticDensity: 0,
     friction: 0.45,
     restitution: 0.05,
+    margin: 0.15,
+  },
+  level: {
+    wallThickness: 0.8,
+    wallColor: 0x3d4a5c,
   },
   particles: {
     radius: 0.15,
@@ -46,7 +51,9 @@ export const config = {
   },
   metaball: {
     threshold: 0.42,
-    softness: 0.12,
+    softness: 0.08,
+    stroke: 0.16,
+    fillAlpha: 0.78,
     padding: 0,
   },
   faucet: {
@@ -60,6 +67,7 @@ export const config = {
     innerHeight: 5.2,
     thickness: 0.4,
     color: 0x8a9bb0,
+    liquidColor: [120, 190, 255, 255],
   },
   debug: {
     hudFill: 0xffffff,
@@ -74,30 +82,5 @@ export const config = {
     kinematicColor: 0x8080ff,
     dynamicColor: 0xff80ff,
     particleColor: 0x88ccff,
-  },
-  demo: {
-    floor: { x: 9, y: 0.4, hx: 9, hy: 0.4, color: 0x3d4a5c },
-    leftWall: { x: 0.4, y: 16, hx: 0.4, hy: 16, color: 0x3d4a5c },
-    rightWall: { x: 17.6, y: 16, hx: 0.4, hy: 16, color: 0x3d4a5c },
-    crate: { x: 3.2, y: 2.4, hx: 1.1, hy: 1.1, color: 0xc4783a, angle: 0.28 },
-    flask: { x: 9, y: 3.8 },
-    faucets: [
-      {
-        x: 7.6,
-        y: 12.2,
-        color: [255, 48, 48, 255],
-        fill: 0xcc3333,
-        vx: 1.6,
-        vy: -6,
-      },
-      {
-        x: 10.4,
-        y: 12.2,
-        color: [40, 90, 255, 255],
-        fill: 0x3366dd,
-        vx: -1.6,
-        vy: -6,
-      },
-    ],
   },
 };

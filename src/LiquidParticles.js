@@ -40,6 +40,19 @@ export class LiquidParticles {
     return this._count;
   }
 
+  fillFlask(body, innerW, innerH, count, color) {
+    const room = config.particles.maxCount - this._count;
+    if (room <= 0 || count <= 0) return;
+    const gap = config.particles.radius * 2;
+    const pts = fillPoints(innerW, innerH, Math.min(count, room), gap);
+    const local = new window.liquidfun.b2Vec2(0, 0);
+    for (let i = 0; i < pts.length; i++) {
+      local.Set(pts[i].x, pts[i].y);
+      const world = body.GetWorldPoint(local);
+      this.emit(world.x, world.y, 0, 0, color);
+    }
+  }
+
   emit(x, y, vx, vy, color) {
     if (this._count >= config.particles.maxCount) return;
     const lf = window.liquidfun;
@@ -107,6 +120,44 @@ export class LiquidParticles {
     }
   }
 }
+
+export function fillPoints(innerW, innerH, count, gap) {
+  const pts = [];
+  if (count <= 0 || gap <= 0 || innerW <= 0 || innerH <= 0) return pts;
+  const cols = Math.floor(innerW / gap);
+  const rows = Math.floor(innerH / gap);
+  if (cols < 1 || rows < 1) return pts;
+  const n = Math.min(count, cols * rows);
+  const x0 = -((cols - 1) * gap) / 2;
+  const y0 = -innerH / 2 + gap / 2;
+  for (let i = 0; i < n; i++) {
+    const col = i % cols;
+    const row = (i / cols) | 0;
+    pts.push({ x: x0 + col * gap, y: y0 + row * gap });
+  }
+  return pts;
+}
+
+function assertFillInside() {
+  const w = 4.2;
+  const h = 5.2;
+  const gap = 0.3;
+  const pts = fillPoints(w, h, 20, gap);
+  if (pts.length !== 20) throw new Error("fill point count");
+  const hx = w / 2;
+  const hy = h / 2;
+  for (let i = 0; i < pts.length; i++) {
+    const p = pts[i];
+    if (p.x < -hx || p.x > hx || p.y < -hy || p.y > hy) {
+      throw new Error("fill point outside flask");
+    }
+  }
+  if (!(pts[0].y < pts[pts.length - 1].y)) {
+    throw new Error("fill should grow upward");
+  }
+}
+
+assertFillInside();
 
 function createParticleSystem(world) {
   const lf = window.liquidfun;

@@ -1,19 +1,22 @@
-import { Graphics } from './vendor/pixi.min.mjs';
+import { Sprite } from './vendor/pixi.min.mjs';
 import { config } from './config.js';
 import { GameObject } from './GameObject.js';
+
+const SPRITE_SRC = new URL('./assets/flask1.png', import.meta.url).href;
+const SPRITE_ASPECT = 430 / 333;
 
 export class Flask extends GameObject {
   constructor(game, options) {
     const lf = window.liquidfun;
-    const W = options.innerWidth ?? config.flask.innerWidth;
-    const H = options.innerHeight ?? config.flask.innerHeight;
-    const T = options.thickness ?? config.flask.thickness;
-    const color = options.color ?? config.flask.color;
+    const s = options.scale ?? 1;
+    const W = (options.innerWidth ?? config.flask.innerWidth) * s;
+    const H = (options.innerHeight ?? config.flask.innerHeight) * s;
+    const T = (options.thickness ?? config.flask.thickness) * s;
 
     const def = new lf.b2BodyDef();
     def.type = options.type ?? lf.b2_staticBody;
     def.position.Set(options.x, options.y);
-    def.angle = options.angle ?? 0;
+    def.angle = options.rotation ?? options.angle ?? 0;
     const body = game.world.CreateBody(def);
 
     const left = { hx: T / 2, hy: H / 2 + T / 2, cx: -W / 2 - T / 2, cy: -T / 2 };
@@ -25,12 +28,18 @@ export class Flask extends GameObject {
 
     super(game, body);
 
+    this.innerW = W;
+    this.innerH = H;
+    this.amount = options.amount ?? 0;
+
     const ppm = config.world.pixelsPerMeter;
-    const g = new Graphics();
-    drawLocalBox(g, left, ppm, color);
-    drawLocalBox(g, right, ppm, color);
-    drawLocalBox(g, bottom, ppm, color);
-    this.view = g;
+    const sprite = Sprite.from(SPRITE_SRC);
+    sprite.anchor.set(0.5);
+    sprite.width = (W + 2 * T) * ppm;
+    sprite.height = sprite.width * SPRITE_ASPECT;
+    sprite.y = (H / 2 + T) * ppm - sprite.height / 2;
+    if (options.color != null) sprite.tint = options.color;
+    this.view = sprite;
     this.container.addChild(this.view);
   }
 }
@@ -45,8 +54,4 @@ function addBoxFixture(body, { hx, hy, cx, cy }) {
   fd.friction = config.box.friction;
   fd.restitution = config.box.restitution;
   body.CreateFixtureFromDef(fd);
-}
-
-function drawLocalBox(g, { hx, hy, cx, cy }, ppm, color) {
-  g.rect((cx - hx) * ppm, (-cy - hy) * ppm, hx * ppm * 2, hy * ppm * 2).fill(color);
 }
