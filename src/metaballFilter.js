@@ -7,7 +7,7 @@ const fragment = await fetch(new URL('./metaball.frag', import.meta.url)).then((
 });
 
 export function createMetaballFilter() {
-  const { threshold, softness, stroke, fillAlpha, padding } = config.metaball;
+  const { threshold, softness, stroke, fillAlpha, sparseLight, denseDark, padding } = config.metaball;
   const filter = new Filter({
     glProgram: GlProgram.from({
       vertex: defaultFilterVert,
@@ -19,6 +19,8 @@ export function createMetaballFilter() {
         uSoftness: { value: softness, type: 'f32' },
         uStroke: { value: stroke, type: 'f32' },
         uFillAlpha: { value: fillAlpha, type: 'f32' },
+        uSparseLight: { value: sparseLight, type: 'f32' },
+        uDenseDark: { value: denseDark, type: 'f32' },
       },
     },
   });
@@ -30,6 +32,11 @@ export function metaballAlpha(field, threshold, softness, stroke, fillAlpha) {
   const edge = smoothstep(threshold - stroke, threshold - stroke + softness, field);
   const fill = smoothstep(threshold, threshold + softness, field);
   return edge * (1 - fill) + fillAlpha * fill;
+}
+
+export function densityShade(alpha, sparseLight, denseDark) {
+  const d = Math.min(1, Math.max(0, alpha));
+  return sparseLight + (denseDark - sparseLight) * d;
 }
 
 function smoothstep(e0, e1, x) {
@@ -49,6 +56,10 @@ function assertStroke() {
   }
   if (Math.abs(metaballAlpha(core, threshold, softness, stroke, fillAlpha) - fillAlpha) > 1e-6) {
     throw new Error('metaball core should use fill alpha');
+  }
+  const { sparseLight, denseDark } = config.metaball;
+  if (!(densityShade(0, sparseLight, denseDark) > densityShade(1, sparseLight, denseDark))) {
+    throw new Error('low density should be lighter than high density');
   }
 }
 

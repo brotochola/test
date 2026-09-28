@@ -43,7 +43,7 @@ export class Game {
     });
 
     globalThis.__PIXI_APP__ = this.app;
-    const bgSrc = new URL("./assets/bg.jpg", import.meta.url).href;
+    const bgSrc = new URL("./assets/bg.png", import.meta.url).href;
     await Assets.load([
       bgSrc,
       new URL("./assets/flask1.png", import.meta.url).href,

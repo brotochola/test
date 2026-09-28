@@ -54,6 +54,8 @@ export const config = {
     softness: 0.08,
     stroke: 0.16,
     fillAlpha: 0.78,
+    sparseLight: 1.04,
+    denseDark: 0.96,
     padding: 0,
   },
   zIndex: {
