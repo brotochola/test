@@ -232,6 +232,7 @@ export class Game {
     // ponytail: drop leftover past maxSubSteps; raise maxSubSteps if the sim stutters under load
     while (this.acc >= step && n < max) {
       const t0 = performance.now();
+      if (this.liquid) this.liquid.cullBelow();
       this.world.Step(
         step,
         config.world.velocityIterations,

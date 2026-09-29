@@ -95,6 +95,11 @@ export class LiquidParticles {
     }
   }
 
+  cullBelow() {
+    if (!this._kill) this._kill = makeKill(window.liquidfun);
+    this.system.DestroyParticlesInShape(this._kill.shape, this._kill.xf);
+  }
+
   sync() {
     const buffer = this.system.GetPositionBuffer(); //i'd be better to get the buffer directly
     const colors = this.system.GetColorBuffer();
@@ -180,6 +185,34 @@ function assertFillInside() {
 }
 
 assertFillInside();
+
+// ponytail: fixed slab; a particle faster than killDepth/timeStep in one step falls through it
+const killDepth = 32;
+
+export function killBox(worldW, margin, depth) {
+  const hy = depth / 2;
+  return { x: worldW / 2, y: -margin - hy, hx: worldW, hy };
+}
+
+function assertKillBox() {
+  const w = 18;
+  const margin = 1;
+  const box = killBox(w, margin, killDepth);
+  if (box.y + box.hy !== -margin) throw new Error("kill line");
+  if (box.x - box.hx > 0 || box.x + box.hx < w) throw new Error("kill span");
+}
+
+assertKillBox();
+
+function makeKill(lf) {
+  const w = config.app.width / config.world.pixelsPerMeter;
+  const box = killBox(w, config.particles.killMargin, killDepth);
+  const shape = new lf.b2PolygonShape();
+  shape.SetAsBoxXYCenterAngle(box.hx, box.hy, new lf.b2Vec2(box.x, box.y), 0);
+  const xf = new lf.b2Transform();
+  xf.SetIdentity();
+  return { shape, xf };
+}
 
 function createParticleSystem(world) {
   const lf = window.liquidfun;

@@ -55,6 +55,7 @@ export const config = {
     offscreenX: -4096,
     offscreenY: -4096,
     gridCell: 0.6,
+    killMargin: 1,
   },
   metaball: {
     threshold: 0.8,
