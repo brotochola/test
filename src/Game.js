@@ -209,7 +209,7 @@ export class Game {
     this.tutorial?.end();
     this.mode = "play";
     this.hud.setPlaying(true);
-    this.sound.play(OPEN);
+    this.sound.play(OPEN, { volume: 0.5 });
   }
 
   restartLevel() {

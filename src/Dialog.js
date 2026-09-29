@@ -2,8 +2,8 @@ import { Container, Graphics, Rectangle, Sprite, Text } from "./vendor/pixi.min.
 import { config } from "./config.js";
 import { assetUrl } from "./assets.js";
 
-const BTN_W = 360;
-const BTN_H = 56;
+const BTN_W = 260;
+const BTN_H = 78;
 const FOX_W = 200;
 const BUBBLE_MAX = 18;
 const BUBBLE_RATE = 0.12;
@@ -329,7 +329,7 @@ function labeledButton(src, caption, fill, color, onTap) {
     text: caption,
     style: {
       fill,
-      fontSize: config.ui.fontSize,
+      fontSize: 24,
       fontFamily: config.ui.fontFamily,
       fontWeight: "600",
     },

@@ -1,42 +1,32 @@
 import { flaskY, Level } from "./Level.js";
 
-const RED = [255, 48, 48, 255];
+const WATER = [70, 200, 255, 255];
 
+// Easy on purpose: the steep board already pours into the jar.
+// A nudge either way still lands; the long top board is the waterfall.
 export class Level1 extends Level {
   config = {
     coins: 50,
     flasks: [
       {
-        x: 9,
+        x: 4,
         y: flaskY(1),
         type: 1,
-        amount: 300,
-        targetColor: RED,
+        amount: 150,
+        targetColor: WATER,
       },
     ],
     faucets: [
       {
-        x: 5.2,
-        y: 26,
-        color: RED,
-        amount: 520,
+        x: 9,
+        y: 26.8,
+        color: WATER,
+        amount: 400,
       },
     ],
     platforms: [
-      {
-        type: "short",
-        x: 12,
-        y: 18,
-        angle: 0.45,
-        rotate: true,
-      },
-      {
-        type: "platform",
-        x: 2,
-        y: 16,
-        angle: 0.45,
-        rotate: true,
-      },
+      { type: "short", x: 9, y: 23, angle: -0.18, rotate: false },
+      { type: "platform", x: 15, y: 14.4, angle: 0.92, rotate: true },
     ],
   };
 }
