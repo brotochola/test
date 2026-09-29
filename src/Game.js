@@ -194,7 +194,7 @@ export class Game {
 
     if (this.hud) {
       this.hud.setLevel(this.levelIndex + 1);
-      this.hud.setCoins(0);
+      this.hud.setCoins(this.coins);
       this.hud.setPlaying(false);
       this.hud.setPlayEnabled(true);
     }
@@ -260,7 +260,7 @@ export class Game {
     this.fx = new ParticleFx(this);
 
     if (this.hud) {
-      this.hud.setCoins(0);
+      this.hud.setCoins(this.coins);
       this.hud.setPlaying(false);
       this.hud.setPlayEnabled(true);
     }
@@ -408,10 +408,12 @@ export class Game {
     const results = [];
     let n = 0;
     for (let i = 0; i < flasks.length; i++) {
-      results.push(flasks[i].sample(this.liquid));
+      const result = flasks[i].sample(this.liquid);
+      // results.push(result);
+      // console.log(i, flasks[i].fillCount, result);
       n += flasks[i].fillCount;
     }
-    this.hud.setCoins(n);
+    this.hud.setCoins((this.coins ?? 0) + n);
     return { results, n };
   }
 

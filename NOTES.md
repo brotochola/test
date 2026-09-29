@@ -38,6 +38,8 @@ Fill in before submit. Mark real vs emulated.
 ## Known limitations
 
 - More levels! I loved to build this game.
+- I would have liked to have more time and add a bgm and some more sound effects.
+- An animated character (I was thinking of a cute cat in a lab robe, with glasses) that reacts to your progress.
 - Portrait-only on coarse pointers (phones/tablets). Landscape shows a text rotate prompt and pauses the sim. Desktop wide windows letterbox; that is intended.
 - Rewards on the result card are a demo score, labeled **demo rewards**. Not a wallet and not real earnings.
 - Restart mid-level keeps board/faucet angles (on purpose). Play again after the finale stays on level 3; refresh to start over.

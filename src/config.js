@@ -134,7 +134,7 @@ export const config = {
     width: 5,
     liquidColor: [120, 190, 255, 255],
     checkEvery: 0.1,
-    colorTolerance: 48,
+    colorTolerance: 80,
     minCount: 20,
     labelW: 160,
     labelSrcW: 1527,

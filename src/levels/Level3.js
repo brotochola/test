@@ -47,7 +47,7 @@ export class Level3 extends Level {
       {
         x: 15.4,
         y: 26.4,
-        color: CYAN,
+        color: GREEN,
         amount: 110,
       },
     ],

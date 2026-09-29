@@ -164,7 +164,9 @@ export class Flask extends GameObject {
     }
     this._lastN = n;
     if (n < this.need) return false;
-    return colorDist(rgb, this.targetColor) <= config.flask.colorTolerance;
+    const colorDistTemp = colorDist(rgb, this.targetColor);
+    // console.log(liquid, rgb, this.targetColor, colorDistTemp);
+    return colorDistTemp <= config.flask.colorTolerance;
   }
 }
 
