@@ -63,14 +63,16 @@ export class Platform extends GameObject {
         art.h + pad * 2,
       );
       this._onDown = (e) => {
+        if (!this.game.canAim("platform")) return;
         this._drag = true;
         this._pointer = e.pointerId;
         this.aimAt(e.global.x, e.global.y);
+        this.game.onAimed("platform");
       };
       this._onMove = (e) => {
         if (!this._drag || e.pointerId !== this._pointer) return;
         const p = clientToCanvas(game.app.canvas, e.clientX, e.clientY);
-        this.aimAt(p.x, p.y);
+        this.aimAt(p.x, p.y, true);
       };
       this._onUp = (e) => {
         if (e.pointerId !== this._pointer) return;
@@ -85,14 +87,19 @@ export class Platform extends GameObject {
     this.update();
   }
 
-  aimAt(sx, sy) {
+  aimAt(sx, sy, dragging = false) {
+    if (!dragging && !this.game.canAim("platform")) return;
     const ppm = config.world.pixelsPerMeter;
     const wx = (sx - config.world.originX) / ppm;
     const wy = (config.world.originY - sy) / ppm;
     const dx = wx - this.px;
     const dy = wy - this.py;
     if (dx * dx + dy * dy < 1e-8) return;
-    this.body.SetTransform(this._pos, Math.atan2(dy, dx));
+    this.setAngle(Math.atan2(dy, dx));
+  }
+
+  setAngle(angle) {
+    this.body.SetTransform(this._pos, angle);
     this.update();
   }
 

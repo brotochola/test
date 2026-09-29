@@ -108,18 +108,27 @@ export class Dialog {
     this.game.nextLevel();
   }
 
-  show({ earned, last, level, levels }) {
+  show({ earned, last, level, levels, lost }) {
     this.stopTweens();
     this.stopBubbles();
     this._last = last;
     this.root.visible = true;
     this.ctaNote.visible = false;
     this.foxHappy.visible = !last;
-    this.foxCta.visible = last;
-    this.title.text = last ? "All mixed!" : "Level complete!";
+    this.foxCta.visible = last && !lost;
+    this.title.text = lost
+      ? "Not quite"
+      : last
+        ? "All mixed!"
+        : "Level complete!";
     this.progress.text = `Level ${level} of ${levels}`;
+    this.earned.visible = !lost;
     this.earned.text = earned > 0 ? `+${earned} coins` : "Already collected";
+    this.next.root.visible = !lost;
     this.next.text.text = last ? "Explore Scrambly" : "Next";
+    this.again.root.y = lost
+      ? this.next.root.y
+      : this.next.root.y - BTN_H - 12;
     this.again.root.scale.set(1);
     this.next.root.scale.set(1);
     drawDots(this.dots, level, levels);
@@ -177,6 +186,9 @@ export class Dialog {
     this.card.interactiveChildren = true;
     this.again.root.scale.set(1);
     this.next.root.scale.set(1);
+    this.next.root.visible = true;
+    this.earned.visible = true;
+    this.again.root.y = this.next.root.y - BTN_H - 12;
   }
 
   bounceTap(node, fn) {

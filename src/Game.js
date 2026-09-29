@@ -15,6 +15,7 @@ import { LiquidParticles } from "./LiquidParticles.js";
 import { ParticleFx } from "./ParticleFx.js";
 import { Dialog } from "./Dialog.js";
 import { Hud } from "./Hud.js";
+import { Tutorial } from "./Tutorial.js";
 import { Level1 } from "./levels/Level1.js";
 import { Level2 } from "./levels/Level2.js";
 import { Level3 } from "./levels/Level3.js";
@@ -30,19 +31,26 @@ export class Game {
     this.liquid = null;
     this.fx = null;
     this.flasks = [];
+    this.faucets = [];
+    this.platforms = [];
     this.debug = config.game.debug;
     this.acc = 0;
     this.checkAcc = 0;
+    this.settleAcc = 0;
     this.debugGfx = null;
     this.debugHud = null;
     this.hud = null;
     this.dialog = null;
+    this.tutorial = null;
     this.levels = [new Level1(), new Level2(), new Level3()];
     this.levelIndex = 0;
     this.coins = 0;
     this.awarded = [false, false, false];
     this.paused = false;
     this.won = false;
+    this.resolved = false;
+    this.mode = "design";
+    this.tutorialSeen = false;
     this._onResize = () => this.layout();
     this._onVisibility = () => this.onVisibility();
   }
@@ -100,6 +108,7 @@ export class Game {
     this.app.stage.addChild(this.debugHud);
 
     this.hud = new Hud(this);
+    this.tutorial = new Tutorial(this);
     this.dialog = new Dialog(this);
     this.loadLevel(this.levels[this.levelIndex]);
     this.app.ticker.add((ticker) => this.tick(ticker));
@@ -116,16 +125,24 @@ export class Game {
   }
 
   loadLevel(level) {
+    this.tutorial?.end();
     this.clearLevel();
     this.paused = false;
     this.won = false;
+    this.resolved = false;
+    this.mode = "design";
     this.checkAcc = 0;
+    this.settleAcc = 0;
+    this.acc = 0;
     if (this.dialog) this.dialog.hide();
     const spec = level.config;
     const walls = level.enclosure();
     for (let i = 0; i < walls.length; i++) new Enclosure(this, walls[i]);
+    this.platforms = [];
     const platforms = spec.platforms ?? [];
-    for (let i = 0; i < platforms.length; i++) new Platform(this, platforms[i]);
+    for (let i = 0; i < platforms.length; i++) {
+      this.platforms.push(new Platform(this, platforms[i]));
+    }
 
     const flaskSpecs = spec.flasks ?? [];
     const flasks = [];
@@ -137,17 +154,77 @@ export class Game {
     this.liquid = new LiquidParticles(this);
     this.fx = new ParticleFx(this);
 
+    this.faucets = [];
     const faucets = spec.faucets ?? [];
-    for (let i = 0; i < faucets.length; i++) new Faucet(this, faucets[i]);
+    for (let i = 0; i < faucets.length; i++) {
+      this.faucets.push(new Faucet(this, faucets[i]));
+    }
 
     if (this.hud) {
       this.hud.setLevel(this.levelIndex + 1);
-      this.hud.setCoins(this.coins);
+      this.hud.setCoins(0);
+      this.hud.setPlaying(false);
+      this.hud.setPlayEnabled(true);
     }
+    if (this.levelIndex === 0 && !this.tutorialSeen) this.tutorial?.start();
+  }
+
+  canAim(kind) {
+    if (this.mode !== "design") return false;
+    if (!this.tutorial) return true;
+    return this.tutorial.canAim(kind);
+  }
+
+  onAimed(kind) {
+    this.tutorial?.onAimed(kind);
+  }
+
+  play() {
+    if (this.mode === "play" || this.paused) return;
+    if (this.tutorial?.blockingPlay()) return;
+    this.tutorialSeen = true;
+    this.tutorial?.end();
+    this.mode = "play";
+    this.hud.setPlaying(true);
   }
 
   restartLevel() {
-    this.loadLevel(this.levels[this.levelIndex]);
+    this.resetPlay();
+  }
+
+  resetPlay() {
+    this.paused = false;
+    this.won = false;
+    this.resolved = false;
+    this.mode = "design";
+    this.checkAcc = 0;
+    this.settleAcc = 0;
+    this.acc = 0;
+    this.dialog?.hide();
+
+    const faucets = this.faucets;
+    for (let i = 0; i < faucets.length; i++) faucets[i].reset();
+    const flasks = this.flasks;
+    for (let i = 0; i < flasks.length; i++) flasks[i].resetCount();
+
+    const world = this.world;
+    if (this.liquid) {
+      world.DestroyParticleSystem(this.liquid.system);
+      this.liquid.root.destroy();
+      this.liquid = null;
+    }
+    if (this.fx) {
+      this.fx.destroy();
+      this.fx = null;
+    }
+    this.liquid = new LiquidParticles(this);
+    this.fx = new ParticleFx(this);
+
+    if (this.hud) {
+      this.hud.setCoins(0);
+      this.hud.setPlaying(false);
+      this.hud.setPlayEnabled(true);
+    }
   }
 
   nextLevel() {
@@ -156,23 +233,32 @@ export class Game {
     this.loadLevel(this.levels[this.levelIndex]);
   }
 
-  onWin() {
+  onWin(n) {
     if (this.won) return;
     this.won = true;
     this.paused = true;
     const first = !this.awarded[this.levelIndex];
-    const earned = first ? (this.levels[this.levelIndex].config.coins ?? 50) : 0;
+    const earned = first ? n : 0;
     if (first) {
       this.coins += earned;
       this.awarded[this.levelIndex] = true;
     }
-    this.hud.setCoins(this.coins);
     this.dialog.show({
       earned,
-      total: this.coins,
       last: this.levelIndex >= this.levels.length - 1,
       level: this.levelIndex + 1,
       levels: this.levels.length,
+    });
+  }
+
+  onLose() {
+    this.paused = true;
+    this.dialog.show({
+      earned: 0,
+      last: false,
+      level: this.levelIndex + 1,
+      levels: this.levels.length,
+      lost: true,
     });
   }
 
@@ -187,6 +273,8 @@ export class Game {
     }
     objects.length = 0;
     this.flasks = [];
+    this.faucets = [];
+    this.platforms = [];
     if (this.liquid) {
       world.DestroyParticleSystem(this.liquid.system);
       this.liquid.root.destroy();
@@ -219,7 +307,15 @@ export class Game {
   }
 
   tick(ticker) {
+    const dt = ticker.deltaMS / 1000;
+    if (this.tutorial?.active) this.tutorial.update(dt);
+
     if (this.paused) {
+      this.updateDebug(ticker, 0, 0, 0);
+      return;
+    }
+
+    if (this.mode !== "play") {
       this.updateDebug(ticker, 0, 0, 0);
       return;
     }
@@ -255,23 +351,49 @@ export class Game {
       this.liquid.sync();
     }
     const drawMs = performance.now() - tDraw;
-    this.checkWin(ticker);
-    if (this.fx) this.fx.update(ticker.deltaMS / 1000);
+    this.updateFlasks(ticker);
+    this.tickResolve(ticker);
+    if (this.fx) this.fx.update(dt);
     this.updateDebug(ticker, n, physMs, drawMs);
   }
 
-  checkWin(ticker) {
-    if (this.paused || this.won || !this.liquid) return;
+  sampleFlasks() {
+    const flasks = this.flasks;
+    const results = [];
+    let n = 0;
+    for (let i = 0; i < flasks.length; i++) {
+      results.push(flasks[i].sample(this.liquid));
+      n += flasks[i].fillCount;
+    }
+    this.hud.setCoins(n);
+    return { results, n };
+  }
+
+  updateFlasks(ticker) {
+    if (!this.liquid) return;
     this.checkAcc += ticker.deltaMS / 1000;
     if (this.checkAcc < config.flask.checkEvery) return;
     this.checkAcc = 0;
-    const flasks = this.flasks;
-    if (flasks.length === 0) return;
-    let ok = true;
-    for (let i = 0; i < flasks.length; i++) {
-      if (!flasks[i].sample(this.liquid)) ok = false;
+    this.sampleFlasks();
+  }
+
+  faucetsDone() {
+    const faucets = this.faucets;
+    for (let i = 0; i < faucets.length; i++) {
+      if (faucets[i].emitted < faucets[i].amount) return false;
     }
-    if (ok) this.onWin();
+    return true;
+  }
+
+  tickResolve(ticker) {
+    if (this.resolved || this.won || !this.liquid) return;
+    if (!this.faucetsDone()) return;
+    this.settleAcc += ticker.deltaMS / 1000;
+    if (this.settleAcc < config.game.settleDelay) return;
+    this.resolved = true;
+    const { results, n } = this.sampleFlasks();
+    if (allFlasksPass(results)) this.onWin(n);
+    else this.onLose();
   }
 
   updateDebug(ticker, n, physMs, drawMs) {
@@ -344,3 +466,16 @@ export class Game {
     if (count > 0) g.fill(pc);
   }
 }
+
+export function allFlasksPass(results) {
+  if (results.length === 0) return false;
+  for (let i = 0; i < results.length; i++) {
+    if (!results[i]) return false;
+  }
+  return true;
+}
+
+if (allFlasksPass([]) !== false) throw new Error("empty flasks fail");
+if (allFlasksPass([true]) !== true) throw new Error("one flask pass");
+if (allFlasksPass([true, false]) !== false) throw new Error("mixed flasks fail");
+if (allFlasksPass([true, true]) !== true) throw new Error("all flasks pass");

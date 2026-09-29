@@ -51,14 +51,16 @@ export class Faucet {
     game.objects.push(this);
 
     this._onDown = (e) => {
+      if (!this.game.canAim("faucet")) return;
       this._drag = true;
       this._pointer = e.pointerId;
       this.aimAt(e.global.x, e.global.y);
+      this.game.onAimed("faucet");
     };
     this._onMove = (e) => {
       if (!this._drag || e.pointerId !== this._pointer) return;
       const p = clientToCanvas(game.app.canvas, e.clientX, e.clientY);
-      this.aimAt(p.x, p.y);
+      this.aimAt(p.x, p.y, true);
     };
     this._onUp = (e) => {
       if (e.pointerId !== this._pointer) return;
@@ -71,14 +73,24 @@ export class Faucet {
     this.update();
   }
 
-  aimAt(sx, sy) {
+  reset() {
+    this.emitted = 0;
+    this.acc = 0;
+  }
+
+  aimAt(sx, sy, dragging = false) {
+    if (!dragging && !this.game.canAim("faucet")) return;
     const ppm = config.world.pixelsPerMeter;
     const wx = (sx - config.world.originX) / ppm;
     const wy = (config.world.originY - sy) / ppm;
     const dx = wx - this.x;
     const dy = wy - this.y;
     if (dx * dx + dy * dy < 1e-8) return;
-    this.aim = Math.atan2(dy, dx);
+    this.setAim(Math.atan2(dy, dx));
+  }
+
+  setAim(aim) {
+    this.aim = aim;
     this.vx = Math.cos(this.aim) * this.speed;
     this.vy = Math.sin(this.aim) * this.speed;
     this.update();
@@ -91,6 +103,7 @@ export class Faucet {
   }
 
   step(dt) {
+    if (this.game.mode !== "play") return;
     if (this.emitted >= this.amount) return;
     this.acc += dt;
     const interval = 1 / this.rate;

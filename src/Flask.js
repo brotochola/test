@@ -85,6 +85,15 @@ export class Flask extends GameObject {
     this._lastN = 0;
   }
 
+  get fillCount() {
+    return this._lastN;
+  }
+
+  resetCount() {
+    this._lastN = 0;
+    this.countText.text = `0/${this.need}`;
+  }
+
   update() {
     super.update();
     if (!this.backContainer) return;

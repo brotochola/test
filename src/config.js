@@ -8,6 +8,7 @@ export const config = {
   },
   game: {
     debug: !true,
+    settleDelay: 3,
   },
   world: {
     gravityX: 0,
@@ -74,6 +75,16 @@ export const config = {
     debug: 5,
     hud: 10,
     dialog: 11,
+    tutorial: 12,
+  },
+  tutorial: {
+    strokeWidth: 6,
+    pad: 18,
+    handW: 88,
+    sweep: 0.7,
+    demoDuration: 1.4,
+    bobAmp: 12,
+    bobSpeed: 3,
   },
   fx: {
     maxCount: 256,
