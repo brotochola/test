@@ -9,7 +9,7 @@ export class Level1 extends Level {
       {
         x: 9,
         y: flaskY(1),
-        type: 1,
+        type: 2,
         amount: 0,
         targetColor: RED,
       },
@@ -22,13 +22,18 @@ export class Level1 extends Level {
         amount: 520,
       },
     ],
-    boxes: [
+    platforms: [
       {
-        src: "platform.png",
-        x: 9,
+        type: "short",
+        x: 12,
+        y: 18,
+        angle: 0.45,
+        rotate: true,
+      },
+      {
+        type: "platform",
+        x: 2,
         y: 16,
-        width: 6,
-        height: 1.5,
         angle: 0.45,
         rotate: true,
       },

@@ -1,4 +1,4 @@
-import { Graphics, Sprite } from "./vendor/pixi.min.mjs";
+import { Sprite, Text } from "./vendor/pixi.min.mjs";
 import { config } from "./config.js";
 import { GameObject } from "./GameObject.js";
 import { assetUrl } from "./assets.js";
@@ -48,16 +48,32 @@ export class Flask extends GameObject {
     this.view = sprite;
     this.container.addChild(this.view);
 
-    const swatchR = config.flask.swatchR;
     const tint =
       (this.targetColor[0] << 16) |
       (this.targetColor[1] << 8) |
       this.targetColor[2];
-    this.swatch = new Graphics()
-      .circle(0, -sprite.height / 2 - swatchR - 6, swatchR)
-      .fill(tint)
-      .stroke({ width: 3, color: config.ui.cream });
-    this.container.addChild(this.swatch);
+    const labelW = config.flask.labelW;
+    const label = Sprite.from(assetUrl("label.png"));
+    label.anchor.set(0.5);
+    label.width = labelW;
+    label.height = labelW * (config.flask.labelSrcH / config.flask.labelSrcW);
+    label.position.set(0, sprite.height * 0.125);
+    label.tint = tint;
+    this.label = label;
+    this.container.addChild(this.label);
+
+    this.countText = new Text({
+      text: "0",
+      style: {
+        fill: config.ui.ink,
+        fontSize: 22,
+        fontFamily: config.ui.fontFamily,
+        fontWeight: "700",
+      },
+    });
+    this.countText.anchor.set(0.5);
+    this.countText.position.set(label.position.x, label.position.y);
+    this.container.addChild(this.countText);
   }
 
   fillAabb() {
@@ -93,8 +109,9 @@ export class Flask extends GameObject {
     return this._aabb;
   }
 
-  matches(liquid) {
+  sample(liquid) {
     const { n, rgb } = liquid.avgColorInAabb(this.fillAabb());
+    this.countText.text = String(n);
     if (n < config.flask.minCount) return false;
     return colorDist(rgb, this.targetColor) <= config.flask.colorTolerance;
   }
@@ -172,7 +189,9 @@ export function colorDist(a, b) {
 //   if (Math.abs(colorDist([255, 0, 0], [0, 0, 0]) - 255) > 1e-6) {
 //     throw new Error("color dist red");
 //   }
-//   if (!(colorDist([255, 48, 48], [200, 48, 48]) <= config.flask.colorTolerance)) {
+//   if (
+//     !(colorDist([255, 48, 48], [200, 48, 48]) <= config.flask.colorTolerance)
+//   ) {
 //     throw new Error("color tolerance should accept a close red");
 //   }
 // }

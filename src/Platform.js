@@ -8,28 +8,22 @@ export function colliderHalf(size, margin) {
   return size / 2 + margin;
 }
 
-export function spriteSize(width, height, ppm) {
-  return { w: width * ppm, h: height * ppm };
-}
-
-export class Box extends GameObject {
+export class Platform extends GameObject {
   constructor(game, options) {
     const lf = window.liquidfun;
+    const art = config.platform.kinds[options.type];
+    if (!art) throw new Error(`unknown platform type ${options.type}`);
+    const ppm = config.world.pixelsPerMeter;
+    const width = art.w / ppm;
+    const height = art.h / ppm;
     const rotate = !!options.rotate;
-    const type = rotate
-      ? lf.b2_kinematicBody
-      : (options.type ?? lf.b2_staticBody);
-    const density =
-      options.density ??
-      (type === lf.b2_staticBody
-        ? config.box.staticDensity
-        : config.box.density);
+    const bodyType = rotate ? lf.b2_kinematicBody : lf.b2_staticBody;
     const margin = config.box.margin;
-    const hx = colliderHalf(options.width, margin);
-    const hy = colliderHalf(options.height, margin);
+    const hx = colliderHalf(width, margin);
+    const hy = colliderHalf(height, margin);
 
     const def = new lf.b2BodyDef();
-    def.type = type;
+    def.type = bodyType;
     def.position.Set(options.x, options.y);
     def.angle = options.angle ?? 0;
     const body = game.world.CreateBody(def);
@@ -38,19 +32,13 @@ export class Box extends GameObject {
     shape.SetAsBoxXY(hx, hy);
     const fd = new lf.b2FixtureDef();
     fd.shape = shape;
-    fd.density = density;
+    fd.density = config.box.staticDensity;
     fd.friction = options.friction ?? config.box.friction;
     fd.restitution = options.restitution ?? config.box.restitution;
     body.CreateFixtureFromDef(fd);
 
-    const size = spriteSize(
-      options.width,
-      options.height,
-      config.world.pixelsPerMeter,
-    );
-
     super(game, body);
-    this.container.zIndex = config.zIndex.box;
+    this.container.zIndex = config.zIndex.platform;
     this.px = options.x;
     this.py = options.y;
     this._pos = new lf.b2Vec2(options.x, options.y);
@@ -58,10 +46,10 @@ export class Box extends GameObject {
     this._drag = false;
     this._pointer = -1;
 
-    this.view = Sprite.from(assetUrl(options.src));
+    this.view = Sprite.from(assetUrl(art.src));
     this.view.anchor.set(0.5);
-    this.view.width = size.w;
-    this.view.height = size.h;
+    this.view.width = art.w;
+    this.view.height = art.h;
     this.container.addChild(this.view);
 
     if (rotate) {
@@ -69,10 +57,10 @@ export class Box extends GameObject {
       this.container.eventMode = "static";
       this.container.cursor = "pointer";
       this.container.hitArea = new Rectangle(
-        -size.w / 2 - pad,
-        -size.h / 2 - pad,
-        size.w + pad * 2,
-        size.h + pad * 2,
+        -art.w / 2 - pad,
+        -art.h / 2 - pad,
+        art.w + pad * 2,
+        art.h + pad * 2,
       );
       this._onDown = (e) => {
         this._drag = true;
@@ -108,11 +96,6 @@ export class Box extends GameObject {
     this.update();
   }
 
-  update() {
-    super.update();
-    if (this.pivot) this.pivot.rotation = this.body.GetAngle();
-  }
-
   destroy() {
     this._drag = false;
     if (this._rotate) {
@@ -125,20 +108,14 @@ export class Box extends GameObject {
   }
 }
 
-function assertBoxMargin() {
-  const size = 2.2;
-  const margin = config.box.margin;
+function assertPlatformKinds() {
+  const kinds = config.platform.kinds;
+  if (!kinds.platform || !kinds.short) throw new Error("platform kinds");
   const ppm = config.world.pixelsPerMeter;
-  if (colliderHalf(size, margin) !== size / 2 + margin) {
-    throw new Error("box collider");
-  }
-  if (!(colliderHalf(size, margin) > size / 2)) {
-    throw new Error("box collider should exceed the sprite");
-  }
-  const sprite = spriteSize(size, size, ppm);
-  if (sprite.w !== size * ppm || sprite.h !== size * ppm) {
-    throw new Error("box sprite size");
+  const width = kinds.platform.w / ppm;
+  if (colliderHalf(width, config.box.margin) !== width / 2 + config.box.margin) {
+    throw new Error("platform collider");
   }
 }
 
-assertBoxMargin();
+assertPlatformKinds();

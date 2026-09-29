@@ -30,22 +30,18 @@ export class Level2 extends Level {
         amount: 420,
       },
     ],
-    boxes: [
+    platforms: [
       {
-        src: "platform-short.png",
+        type: "short",
         x: 6,
         y: 18,
-        width: 4,
-        height: 2,
         angle: -0.35,
         rotate: true,
       },
       {
-        src: "platform-short.png",
+        type: "short",
         x: 12,
         y: 18,
-        width: 4,
-        height: 2,
         angle: 0.35,
         rotate: true,
       },

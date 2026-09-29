@@ -5,12 +5,9 @@ export const ASSET_FILES = [
   "flask1.png",
   "flask2.png",
   "faucet.png",
-  "pivot.png",
   "platform.png",
-  "platform-short.png",
-  "floor.png",
-  "roof.png",
-  "wall.png",
+  "short_platform.png",
+  "label.png",
   "coin.png",
   "hud-chip.png",
   "btn-restart.png",
@@ -26,5 +23,17 @@ export function assetUrl(file) {
 }
 
 export async function preloadAssets() {
-  await Promise.allSettled(ASSET_FILES.map((file) => Assets.load(assetUrl(file))));
+  await Promise.allSettled(
+    ASSET_FILES.map((file) => Assets.load(assetUrl(file))),
+  );
+}
+
+export async function loadFont() {
+  const face = new FontFace(
+    "Fredoka",
+    `url(${assetUrl("Fredoka-SemiBold.ttf")})`,
+    { weight: "700" },
+  );
+  await face.load();
+  document.fonts.add(face);
 }

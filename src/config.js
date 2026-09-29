@@ -26,7 +26,12 @@ export const config = {
     friction: 0.45,
     restitution: 0.05,
     margin: 0.15,
-    pivotSize: 48,
+  },
+  platform: {
+    kinds: {
+      platform: { src: "platform.png", w: 8.807 * 50, h: 50 },
+      short: { src: "short_platform.png", w: 5.669 * 50, h: 50 },
+    },
   },
   level: {
     wallThickness: 0.8,
@@ -64,6 +69,7 @@ export const config = {
     bg: 0,
     liquid: 1,
     box: 2,
+    platform: 2,
     faucet: 2,
     flask: 2,
     debug: 3,
@@ -86,6 +92,7 @@ export const config = {
     fontSize: 28,
     titleSize: 40,
     dim: 0x201338,
+    fontFamily: "Fredoka",
   },
   flask: {
     width: 5,
@@ -93,7 +100,9 @@ export const config = {
     checkEvery: 0.25,
     colorTolerance: 48,
     minCount: 20,
-    swatchR: 14,
+    labelW: 160,
+    labelSrcW: 1527,
+    labelSrcH: 446,
     types: {
       1: {
         src: "flask1.png",

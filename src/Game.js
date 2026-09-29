@@ -6,8 +6,9 @@ import {
   Text,
 } from "./vendor/pixi.min.mjs";
 import { config } from "./config.js";
-import { assetUrl, preloadAssets } from "./assets.js";
-import { Box } from "./Box.js";
+import { assetUrl, loadFont, preloadAssets } from "./assets.js";
+import { Enclosure } from "./Enclosure.js";
+import { Platform } from "./Platform.js";
 import { Faucet } from "./Faucet.js";
 import { Flask } from "./Flask.js";
 import { LiquidParticles } from "./LiquidParticles.js";
@@ -59,6 +60,7 @@ export class Game {
 
     globalThis.__PIXI_APP__ = this.app;
     await preloadAssets();
+    await loadFont();
     document.body.appendChild(this.app.canvas);
     this.app.stage.sortableChildren = true;
 
@@ -118,8 +120,10 @@ export class Game {
     this.checkAcc = 0;
     if (this.dialog) this.dialog.hide();
     const spec = level.config;
-    const boxes = level.enclosure().concat(spec.boxes ?? []);
-    for (let i = 0; i < boxes.length; i++) new Box(this, boxes[i]);
+    const walls = level.enclosure();
+    for (let i = 0; i < walls.length; i++) new Enclosure(this, walls[i]);
+    const platforms = spec.platforms ?? [];
+    for (let i = 0; i < platforms.length; i++) new Platform(this, platforms[i]);
 
     const flaskSpecs = spec.flasks ?? [];
     const flasks = [];
@@ -267,7 +271,7 @@ export class Game {
     const flasks = this.flasks;
     if (flasks.length === 0) return;
     for (let i = 0; i < flasks.length; i++) {
-      if (!flasks[i].matches(this.liquid)) return;
+      if (!flasks[i].sample(this.liquid)) return;
     }
     this.onWin();
   }

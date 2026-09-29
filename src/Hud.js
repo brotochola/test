@@ -20,7 +20,7 @@ export class Hud {
       style: {
         fill: config.ui.cream,
         fontSize: 28,
-        fontFamily: "sans-serif",
+        fontFamily: config.ui.fontFamily,
         fontWeight: "700",
       },
     });
@@ -40,7 +40,7 @@ export class Hud {
       style: {
         fill: config.ui.cream,
         fontSize: 22,
-        fontFamily: "sans-serif",
+        fontFamily: config.ui.fontFamily,
         fontWeight: "700",
       },
     });
