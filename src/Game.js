@@ -278,7 +278,7 @@ export class Game {
     this.paused = true;
     this.sound.play(WIN, { volume: 0.7 });
     const first = !this.awarded[this.levelIndex];
-    const earned = first ? n : 0;
+    const earned = first && Number.isFinite(n) ? n : 0;
     if (first) {
       this.coins += earned;
       this.awarded[this.levelIndex] = true;
@@ -409,8 +409,7 @@ export class Game {
     let n = 0;
     for (let i = 0; i < flasks.length; i++) {
       const result = flasks[i].sample(this.liquid);
-      // results.push(result);
-      // console.log(i, flasks[i].fillCount, result);
+      results.push(result);
       n += flasks[i].fillCount;
     }
     this.hud.setCoins((this.coins ?? 0) + n);

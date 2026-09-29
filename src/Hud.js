@@ -132,7 +132,7 @@ export class Hud {
   }
 
   setCoins(n) {
-    this.coins.text = String(n);
+    this.coins.text = String(Number.isFinite(n) ? n : 0);
   }
 
   flyCoin(x, y) {
