@@ -160,6 +160,7 @@ export class Flask extends GameObject {
           this.game.fx.burst(x, y, { ...config.fx.flask, count });
       }
       this.game.sound.play(COIN, { ascendingPitch: true, volume: 0.4 });
+      this.game.hud?.flyCoin(this.container.x, this.container.y);
     }
     this._lastN = n;
     if (n < this.need) return false;

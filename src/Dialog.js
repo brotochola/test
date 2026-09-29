@@ -1,9 +1,11 @@
 import { Container, Graphics, Rectangle, Sprite, Text } from "./vendor/pixi.min.mjs";
 import { config } from "./config.js";
 import { assetUrl } from "./assets.js";
+import { bounceTap, tween } from "./ui.js";
 
 const BTN_W = 260;
 const BTN_H = 78;
+const BTN_GAP = 22;
 const FOX_W = 200;
 const BUBBLE_MAX = 18;
 const BUBBLE_RATE = 0.12;
@@ -85,18 +87,15 @@ export class Dialog {
   layoutCard() {
     const h = this.panel.height;
     const top = -h / 2;
-    const pad = h * 0.16;
+    const bot = h / 2;
     this.fox.position.set(0, top - this.foxHappy.height * 0.38);
-    this.next.root.y = h / 2 - pad - BTN_H / 2;
-    this.again.root.y = this.next.root.y - BTN_H - 12;
-    this.ctaNote.y = h / 2 + 22;
-    const textTop = top + pad + 8;
-    const textBot = this.again.root.y - BTN_H / 2 - 8;
-    const span = textBot - textTop;
-    this.title.y = textTop + span * 0.18;
-    this.progress.y = textTop + span * 0.42;
-    this.dots.position.set(0, textTop + span * 0.62);
-    this.earned.y = textTop + span * 0.86;
+    this.title.y = top + 64;
+    this.progress.y = this.title.y + 48;
+    this.dots.position.set(0, this.progress.y + 36);
+    this.earned.y = this.dots.y + 42;
+    this.next.root.y = bot - 48;
+    this.again.root.y = this.next.root.y - BTN_H - BTN_GAP;
+    this.ctaNote.y = bot + 22;
   }
 
   onNext() {
@@ -128,7 +127,7 @@ export class Dialog {
     this.next.text.text = last ? "Explore Scrambly" : "Next";
     this.again.root.y = lost
       ? this.next.root.y
-      : this.next.root.y - BTN_H - 12;
+      : this.next.root.y - BTN_H - BTN_GAP;
     this.again.root.scale.set(1);
     this.next.root.scale.set(1);
     drawDots(this.dots, level, levels);
@@ -188,20 +187,11 @@ export class Dialog {
     this.next.root.scale.set(1);
     this.next.root.visible = true;
     this.earned.visible = true;
-    this.again.root.y = this.next.root.y - BTN_H - 12;
+    this.again.root.y = this.next.root.y - BTN_H - BTN_GAP;
   }
 
   bounceTap(node, fn) {
-    this.game.click();
-    this.playTween({
-      duration: 0.28,
-      onUpdate: (u) => {
-        const s =
-          u < 0.5 ? 1 + 0.08 * (u / 0.5) : 1.08 - 0.08 * ((u - 0.5) / 0.5);
-        node.scale.set(s);
-      },
-      onDone: fn,
-    });
+    this._tweens.push(bounceTap(this.game, node, fn));
   }
 
   playTween(opts) {
@@ -364,27 +354,4 @@ function bounceOut(t) {
 
 function quadOut(t) {
   return 1 - (1 - t) * (1 - t);
-}
-
-function tween(app, { duration, delay = 0, ease, onUpdate, onDone }) {
-  let t = 0;
-  let done = false;
-  const tick = (ticker) => {
-    if (done) return;
-    t += ticker.deltaMS / 1000;
-    if (t < delay) return;
-    const u = Math.min(1, (t - delay) / duration);
-    onUpdate(ease ? ease(u) : u);
-    if (u >= 1) {
-      done = true;
-      app.ticker.remove(tick);
-      onDone?.();
-    }
-  };
-  app.ticker.add(tick);
-  return () => {
-    if (done) return;
-    done = true;
-    app.ticker.remove(tick);
-  };
 }
