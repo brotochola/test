@@ -63,13 +63,14 @@ export const config = {
 
   zIndex: {
     bg: 0,
-    liquid: 1,
-    box: 2,
-    platform: 2,
-    faucet: 2,
-    flask: 2,
-    fx: 3,
-    debug: 4,
+    flaskBack: 1,
+    liquid: 2,
+    box: 3,
+    platform: 3,
+    faucet: 3,
+    flask: 3,
+    fx: 4,
+    debug: 5,
     hud: 10,
     dialog: 11,
   },
@@ -128,7 +129,8 @@ export const config = {
     labelSrcH: 446,
     types: {
       1: {
-        src: "flask1.png",
+        src: "flask1_front.png",
+        srcBack: "flask1_back.png",
         w: 303,
         h: 414,
         boxes: [

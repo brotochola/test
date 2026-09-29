@@ -1,4 +1,4 @@
-import { Sprite, Text } from "./vendor/pixi.min.mjs";
+import { Container, Sprite, Text } from "./vendor/pixi.min.mjs";
 import { config } from "./config.js";
 import { GameObject } from "./GameObject.js";
 import { assetUrl } from "./assets.js";
@@ -40,14 +40,21 @@ export class Flask extends GameObject {
     this.targetColor = options.targetColor ?? config.flask.liquidColor;
 
     const ppm = config.world.pixelsPerMeter;
-    const sprite = Sprite.from(assetUrl(art.src));
-    // sprite.blendMode = "hardlight";
-    sprite.anchor.set(0.5);
-    sprite.width = width * ppm;
-    sprite.height = width * (art.h / art.w) * ppm;
-    if (options.color != null) sprite.tint = options.color;
-    this.view = sprite;
+    const spriteW = width * ppm;
+    const spriteH = width * (art.h / art.w) * ppm;
+
+    this.view = flaskSprite(art.src, spriteW, spriteH, options.color);
     this.container.addChild(this.view);
+
+    if (art.srcBack) {
+      this.backContainer = new Container();
+      this.backContainer.zIndex = config.zIndex.flaskBack;
+      this.back = flaskSprite(art.srcBack, spriteW, spriteH, options.color);
+      this.backContainer.addChild(this.back);
+      game.mainContainer.addChild(this.backContainer);
+      this.backContainer.position.copyFrom(this.container.position);
+      this.backContainer.rotation = this.container.rotation;
+    }
 
     const tint =
       (this.targetColor[0] << 16) |
@@ -58,7 +65,7 @@ export class Flask extends GameObject {
     label.anchor.set(0.5);
     label.width = labelW;
     label.height = labelW * (config.flask.labelSrcH / config.flask.labelSrcW);
-    label.position.set(0, sprite.height * 0.125);
+    label.position.set(0, this.view.height * 0.125);
     label.tint = tint;
     this.label = label;
     this.container.addChild(this.label);
@@ -76,6 +83,18 @@ export class Flask extends GameObject {
     this.countText.position.set(label.position.x, label.position.y);
     this.container.addChild(this.countText);
     this._lastN = 0;
+  }
+
+  update() {
+    super.update();
+    if (!this.backContainer) return;
+    this.backContainer.position.copyFrom(this.container.position);
+    this.backContainer.rotation = this.container.rotation;
+  }
+
+  destroy() {
+    if (this.backContainer) this.backContainer.destroy();
+    this.container.destroy();
   }
 
   fillAabb() {
@@ -135,6 +154,15 @@ export class Flask extends GameObject {
   }
 }
 
+function flaskSprite(src, w, h, tint) {
+  const sprite = Sprite.from(assetUrl(src));
+  sprite.anchor.set(0.5);
+  sprite.width = w;
+  sprite.height = h;
+  if (tint != null) sprite.tint = tint;
+  return sprite;
+}
+
 function rectFixture([x0, y0, x1, y1], art, mpp) {
   return {
     hx: ((x1 - x0) / 2) * mpp,
@@ -170,6 +198,10 @@ function addBoxFixture(body, { hx, hy, cx, cy, angle }) {
 }
 
 function assertFlaskTypes() {
+  const z = config.zIndex;
+  if (!(z.flaskBack < z.liquid && z.liquid < z.flask)) {
+    throw new Error("flask layers must sandwich liquid");
+  }
   const types = config.flask.types;
   for (let type = 1; type <= 2; type++) {
     const art = types[type];

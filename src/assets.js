@@ -2,7 +2,8 @@ import { Assets } from "./vendor/pixi.min.mjs";
 
 export const ASSET_FILES = [
   "bg.png",
-  "flask1.png",
+  "flask1_front.png",
+  "flask1_back.png",
   "flask2.png",
   "faucet.png",
   "platform.png",
