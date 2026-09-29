@@ -57,6 +57,7 @@ export class Faucet {
       if (!this.game.canAim("faucet")) return;
       this._drag = true;
       this._pointer = e.pointerId;
+      this.container.scale.set(1.04);
       this.aimAt(e.global.x, e.global.y);
       this.game.onAimed("faucet");
     };
@@ -68,6 +69,7 @@ export class Faucet {
     this._onUp = (e) => {
       if (e.pointerId !== this._pointer) return;
       this._drag = false;
+      this.container.scale.set(1);
     };
     this.container.on("pointerdown", this._onDown);
     window.addEventListener("pointermove", this._onMove);
@@ -147,6 +149,7 @@ export class Faucet {
   destroy() {
     this.stopPour();
     this._drag = false;
+    this.container.scale.set(1);
     this.container.off("pointerdown", this._onDown);
     window.removeEventListener("pointermove", this._onMove);
     window.removeEventListener("pointerup", this._onUp);

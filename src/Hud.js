@@ -5,7 +5,7 @@ import { bounceTap, tween } from "./ui.js";
 
 const PILL_W = 260;
 const BTN = 72;
-const BTN_SCALE = 0.33;
+const BTN_SCALE = 0.5;
 const MUTE_W = 48;
 const COIN_SIZE = 64;
 

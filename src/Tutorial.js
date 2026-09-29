@@ -1,4 +1,4 @@
-import { Container, Graphics, Sprite } from "./vendor/pixi.min.mjs";
+import { Container, Sprite } from "./vendor/pixi.min.mjs";
 import { config } from "./config.js";
 import { assetUrl } from "./assets.js";
 
@@ -11,16 +11,12 @@ export class Tutorial {
     this._saved = 0;
     this._kind = null;
     this._target = null;
-    this._handBase = { x: 0, y: 0 };
     this._allow = { faucet: false, platform: false };
 
     this.root = new Container();
     this.root.zIndex = config.zIndex.tutorial;
     this.root.eventMode = "none";
     this.root.visible = false;
-
-    this.stroke = new Graphics();
-    this.root.addChild(this.stroke);
 
     this.hand = Sprite.from(assetUrl("tutorial_hand.png"));
     this.hand.anchor.set(0.45, 0.08);
@@ -39,7 +35,6 @@ export class Tutorial {
     this._t = 0;
     this._allow.faucet = false;
     this._allow.platform = false;
-    this.game.hud.setPlayEnabled(false);
     this.beginDemo("faucet");
   }
 
@@ -51,9 +46,7 @@ export class Tutorial {
     this._allow.faucet = true;
     this._allow.platform = true;
     this.root.visible = false;
-    this.stroke.clear();
     this.hand.rotation = 0;
-    this.game.hud.setPlayEnabled(true);
   }
 
   canAim(kind) {
@@ -87,7 +80,6 @@ export class Tutorial {
     this._target = target;
     this._saved = kind === "faucet" ? target.aim : target.body.GetAngle();
     this._t = 0;
-    this.game.hud.setPlayEnabled(false);
   }
 
   beginPlay() {
@@ -98,7 +90,6 @@ export class Tutorial {
     this._allow.faucet = true;
     this._allow.platform = true;
     this.hand.rotation = 0;
-    this.game.hud.setPlayEnabled(true);
   }
 
   update(dt) {
@@ -107,14 +98,7 @@ export class Tutorial {
     if (this.stage === "faucet-demo" || this.stage === "platform-demo") {
       this.stepDemo();
     }
-    this.followTarget();
-    this.drawStroke();
-    const cfg = config.tutorial;
-    this.hand.x = this._handBase.x;
-    this.hand.y =
-      this._handBase.y + Math.sin(this._t * cfg.bobSpeed) * cfg.bobAmp;
-    const demo = this.stage === "faucet-demo" || this.stage === "platform-demo";
-    this.hand.rotation = demo ? Math.sin(this._t * 3) * 0.28 : 0;
+    this.placeHand();
   }
 
   stepDemo() {
@@ -135,46 +119,23 @@ export class Tutorial {
     else target.setAngle(a);
   }
 
-  followTarget() {
+  placeHand() {
+    const cfg = config.tutorial;
     if (this.stage === "play") {
       const btn = this.game.hud.playBtn;
-      this.stroke.position.set(btn.x, btn.y);
-      this._handBase.x = btn.x + 10;
-      this._handBase.y = btn.y + 16;
+      this.hand.x = btn.x + 10;
+      this.hand.y =
+        btn.y + 16 + Math.sin(this._t * cfg.bobSpeed) * cfg.bobAmp;
+      this.hand.rotation = 0;
       return;
     }
     const obj = this._target;
     if (!obj?.container) return;
     const p = obj.container.position;
-    this.stroke.position.set(p.x, p.y);
-    this._handBase.x = p.x + 18;
-    this._handBase.y = p.y + 22;
-  }
-
-  drawStroke() {
-    const g = this.stroke;
-    g.clear();
-    const pulse = 0.55 + 0.45 * Math.sin(this._t * 4);
-    const pad = config.tutorial.pad;
-    let rx;
-    let ry;
-    if (this.stage === "play") {
-      rx = ry = this.game.hud.playBtn.width / 2 + pad;
-    } else if (this._target?.container?.hitArea) {
-      const hit = this._target.container.hitArea;
-      rx = hit.width / 2;
-      ry = hit.height / 2;
-    } else if (this._target?.view) {
-      rx = this._target.view.width / 2 + pad;
-      ry = this._target.view.height / 2 + pad;
-    } else {
-      return;
-    }
-    g.ellipse(0, 0, rx, ry);
-    g.stroke({
-      width: config.tutorial.strokeWidth,
-      color: config.ui.purple,
-      alpha: pulse,
-    });
+    const u = Math.sin((this._t / cfg.demoDuration) * Math.PI);
+    const a = cfg.handArc * u;
+    this.hand.x = p.x + Math.cos(a) * cfg.handRadius;
+    this.hand.y = p.y + Math.sin(a) * cfg.handRadius;
+    this.hand.rotation = a - Math.PI / 2;
   }
 }

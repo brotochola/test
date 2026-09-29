@@ -50,6 +50,7 @@ export class Platform extends GameObject {
     this.view.anchor.set(0.5);
     this.view.width = art.w;
     this.view.height = art.h;
+    if (!rotate) this.view.tint = 0x9aa3ad;
     this.container.addChild(this.view);
 
     if (rotate) {
@@ -66,6 +67,7 @@ export class Platform extends GameObject {
         if (!this.game.canAim("platform")) return;
         this._drag = true;
         this._pointer = e.pointerId;
+        this.container.scale.set(1.04);
         this.aimAt(e.global.x, e.global.y);
         this.game.onAimed("platform");
       };
@@ -77,6 +79,7 @@ export class Platform extends GameObject {
       this._onUp = (e) => {
         if (e.pointerId !== this._pointer) return;
         this._drag = false;
+        this.container.scale.set(1);
       };
       this.container.on("pointerdown", this._onDown);
       window.addEventListener("pointermove", this._onMove);
@@ -105,6 +108,7 @@ export class Platform extends GameObject {
 
   destroy() {
     this._drag = false;
+    this.container.scale.set(1);
     if (this._rotate) {
       this.container.off("pointerdown", this._onDown);
       window.removeEventListener("pointermove", this._onMove);

@@ -21,6 +21,7 @@ export const ASSET_FILES = [
   "btn-secondary.png",
   "fox-happy.png",
   "fox-cta.png",
+  "fox-sad.png",
 ];
 
 export function assetUrl(file) {

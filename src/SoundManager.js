@@ -1,5 +1,5 @@
-const ASCEND_MIN = -4;
-const ASCEND_MAX = 4;
+const ASCEND_MIN = -5;
+const ASCEND_MAX = 6;
 
 export function semitoneRate(n) {
   return 2 ** (n / 12);

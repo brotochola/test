@@ -1,11 +1,17 @@
-import { Container, Graphics, Rectangle, Sprite, Text } from "./vendor/pixi.min.mjs";
+import {
+  Container,
+  Graphics,
+  Rectangle,
+  Sprite,
+  Text,
+} from "./vendor/pixi.min.mjs";
 import { config } from "./config.js";
 import { assetUrl } from "./assets.js";
 import { bounceTap, tween } from "./ui.js";
 
 const BTN_W = 260;
 const BTN_H = 78;
-const BTN_GAP = 22;
+const BTN_GAP = 16;
 const FOX_W = 200;
 const BUBBLE_MAX = 18;
 const BUBBLE_RATE = 0.12;
@@ -51,7 +57,11 @@ export class Dialog {
     this.foxCta.anchor.set(0.5);
     fitWidth(this.foxCta, FOX_W);
     this.foxCta.visible = false;
-    this.fox.addChild(this.foxHappy, this.foxCta);
+    this.foxSad = Sprite.from(assetUrl("fox-sad.png"));
+    this.foxSad.anchor.set(0.5);
+    fitWidth(this.foxSad, FOX_W);
+    this.foxSad.visible = false;
+    this.fox.addChild(this.foxHappy, this.foxCta, this.foxSad);
     this.card.addChild(this.fox);
 
     this.title = label("Level complete!", config.ui.titleSize, config.ui.ink);
@@ -89,11 +99,11 @@ export class Dialog {
     const top = -h / 2;
     const bot = h / 2;
     this.fox.position.set(0, top - this.foxHappy.height * 0.38);
-    this.title.y = top + 64;
-    this.progress.y = this.title.y + 48;
-    this.dots.position.set(0, this.progress.y + 36);
-    this.earned.y = this.dots.y + 42;
-    this.next.root.y = bot - 48;
+    this.title.y = top + 58;
+    this.progress.y = this.title.y + 46;
+    this.dots.position.set(0, this.progress.y + 34);
+    this.earned.y = this.dots.y + 38;
+    this.next.root.y = bot - 74;
     this.again.root.y = this.next.root.y - BTN_H - BTN_GAP;
     this.ctaNote.y = bot + 22;
   }
@@ -113,8 +123,9 @@ export class Dialog {
     this._last = last;
     this.root.visible = true;
     this.ctaNote.visible = false;
-    this.foxHappy.visible = !last;
+    this.foxHappy.visible = !lost && !last;
     this.foxCta.visible = last && !lost;
+    this.foxSad.visible = !!lost;
     this.title.text = lost
       ? "Not quite"
       : last
@@ -339,7 +350,11 @@ function drawDots(g, level, levels) {
     const x = -w / 2 + i * gap;
     if (i < level) g.circle(x, 0, r).fill(config.ui.orange);
     else
-      g.circle(x, 0, r).stroke({ width: 3, color: config.ui.orange, alpha: 0.35 });
+      g.circle(x, 0, r).stroke({
+        width: 3,
+        color: config.ui.orange,
+        alpha: 0.35,
+      });
   }
 }
 

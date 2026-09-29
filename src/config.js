@@ -78,13 +78,13 @@ export const config = {
     tutorial: 12,
   },
   tutorial: {
-    strokeWidth: 6,
-    pad: 18,
     handW: 88,
     sweep: 0.7,
     demoDuration: 1.4,
     bobAmp: 12,
     bobSpeed: 3,
+    handRadius: 70,
+    handArc: Math.PI,
   },
   fx: {
     maxCount: 256,
