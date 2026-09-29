@@ -171,6 +171,8 @@ export class Game {
       earned,
       total: this.coins,
       last: this.levelIndex >= this.levels.length - 1,
+      level: this.levelIndex + 1,
+      levels: this.levels.length,
     });
   }
 
