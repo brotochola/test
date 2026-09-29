@@ -89,7 +89,7 @@ export class Game {
     document.body.appendChild(this.app.canvas);
     this.app.stage.sortableChildren = true;
 
-    const bg = Sprite.from(assetUrl("bg.png"));
+    const bg = Sprite.from(assetUrl("bg.jpg"));
     bg.width = config.app.width;
     bg.height = config.app.height;
     bg.zIndex = config.zIndex.bg;

@@ -148,7 +148,6 @@ export class Flask extends GameObject {
     const delta = n - this._lastN;
     if (delta > 0) {
       for (let i = 0; i < delta; i++) {
-        this.game.sound.play(COIN, { ascendingPitch: true, volume: 0.4 });
         if (!this.game.fx) continue;
         const count = Math.random() < 0.5 ? 2 : 4;
         const x =
@@ -160,6 +159,7 @@ export class Flask extends GameObject {
         if (Math.random() > 0.9)
           this.game.fx.burst(x, y, { ...config.fx.flask, count });
       }
+      this.game.sound.play(COIN, { ascendingPitch: true, volume: 0.4 });
     }
     this._lastN = n;
     if (n < this.need) return false;

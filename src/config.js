@@ -133,7 +133,7 @@ export const config = {
   flask: {
     width: 5,
     liquidColor: [120, 190, 255, 255],
-    checkEvery: 0.25,
+    checkEvery: 0.1,
     colorTolerance: 48,
     minCount: 20,
     labelW: 160,
