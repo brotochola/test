@@ -1,17 +1,21 @@
 import {
   Application,
-  Assets,
   Container,
   Graphics,
   Sprite,
   Text,
 } from "./vendor/pixi.min.mjs";
 import { config } from "./config.js";
+import { assetUrl, preloadAssets } from "./assets.js";
 import { Box } from "./Box.js";
 import { Faucet } from "./Faucet.js";
 import { Flask } from "./Flask.js";
 import { LiquidParticles } from "./LiquidParticles.js";
-import { DemoLevel } from "./levels/DemoLevel.js";
+import { Dialog } from "./Dialog.js";
+import { Hud } from "./Hud.js";
+import { Level1 } from "./levels/Level1.js";
+import { Level2 } from "./levels/Level2.js";
+import { Level3 } from "./levels/Level3.js";
 
 export class Game {
   constructor() {
@@ -22,11 +26,22 @@ export class Game {
     this.objects = [];
     this.world = null;
     this.liquid = null;
+    this.flasks = [];
     this.debug = config.game.debug;
     this.acc = 0;
+    this.checkAcc = 0;
     this.debugGfx = null;
     this.debugHud = null;
+    this.hud = null;
+    this.dialog = null;
+    this.levels = [new Level1(), new Level2(), new Level3()];
+    this.levelIndex = 0;
+    this.coins = 0;
+    this.awarded = [false, false, false];
+    this.paused = false;
+    this.won = false;
     this._onResize = () => this.layout();
+    this._onVisibility = () => this.onVisibility();
   }
 
   async start() {
@@ -43,22 +58,21 @@ export class Game {
     });
 
     globalThis.__PIXI_APP__ = this.app;
-    const bgSrc = new URL("./assets/bg.png", import.meta.url).href;
-    await Assets.load([
-      bgSrc,
-      new URL("./assets/flask1.png", import.meta.url).href,
-      new URL("./assets/flask2.png", import.meta.url).href,
-    ]);
+    await preloadAssets();
     document.body.appendChild(this.app.canvas);
-    const bg = Sprite.from(bgSrc);
+    this.app.stage.sortableChildren = true;
+
+    const bg = Sprite.from(assetUrl("bg.png"));
     bg.width = config.app.width;
     bg.height = config.app.height;
     bg.zIndex = config.zIndex.bg;
+    this.mainContainer.zIndex = 0;
     this.mainContainer.addChild(bg);
     this.app.stage.addChild(this.mainContainer);
     this.layout();
     window.addEventListener("resize", this._onResize);
     window.addEventListener("orientationchange", this._onResize);
+    document.addEventListener("visibilitychange", this._onVisibility);
 
     this.world = new lf.b2World(
       new lf.b2Vec2(config.world.gravityX, config.world.gravityY),
@@ -77,15 +91,32 @@ export class Game {
       },
     });
     this.debugHud.position.set(config.debug.hudX, config.debug.hudY);
+    this.debugHud.zIndex = config.zIndex.debug + 10;
     this.debugHud.visible = this.debug;
     this.app.stage.addChild(this.debugHud);
 
-    this.loadLevel(new DemoLevel());
+    this.hud = new Hud(this);
+    this.dialog = new Dialog(this);
+    this.loadLevel(this.levels[this.levelIndex]);
     this.app.ticker.add((ticker) => this.tick(ticker));
+  }
+
+  onVisibility() {
+    if (document.hidden) {
+      this.app.ticker.stop();
+      this.acc = 0;
+      this.checkAcc = 0;
+      return;
+    }
+    this.app.ticker.start();
   }
 
   loadLevel(level) {
     this.clearLevel();
+    this.paused = false;
+    this.won = false;
+    this.checkAcc = 0;
+    if (this.dialog) this.dialog.hide();
     const spec = level.config;
     const boxes = level.enclosure().concat(spec.boxes ?? []);
     for (let i = 0; i < boxes.length; i++) new Box(this, boxes[i]);
@@ -95,6 +126,7 @@ export class Game {
     for (let i = 0; i < flaskSpecs.length; i++) {
       flasks.push(new Flask(this, flaskSpecs[i]));
     }
+    this.flasks = flasks;
 
     this.liquid = new LiquidParticles(this);
     for (let i = 0; i < flasks.length; i++) {
@@ -114,6 +146,39 @@ export class Game {
 
     const faucets = spec.faucets ?? [];
     for (let i = 0; i < faucets.length; i++) new Faucet(this, faucets[i]);
+
+    if (this.hud) {
+      this.hud.setLevel(this.levelIndex + 1);
+      this.hud.setCoins(this.coins);
+    }
+  }
+
+  restartLevel() {
+    this.loadLevel(this.levels[this.levelIndex]);
+  }
+
+  nextLevel() {
+    if (this.levelIndex >= this.levels.length - 1) return;
+    this.levelIndex += 1;
+    this.loadLevel(this.levels[this.levelIndex]);
+  }
+
+  onWin() {
+    if (this.won) return;
+    this.won = true;
+    this.paused = true;
+    const first = !this.awarded[this.levelIndex];
+    const earned = first ? (this.levels[this.levelIndex].config.coins ?? 50) : 0;
+    if (first) {
+      this.coins += earned;
+      this.awarded[this.levelIndex] = true;
+    }
+    this.hud.setCoins(this.coins);
+    this.dialog.show({
+      earned,
+      total: this.coins,
+      last: this.levelIndex >= this.levels.length - 1,
+    });
   }
 
   clearLevel() {
@@ -126,6 +191,7 @@ export class Game {
       else obj.container.destroy();
     }
     objects.length = 0;
+    this.flasks = [];
     if (this.liquid) {
       world.DestroyParticleSystem(this.liquid.system);
       this.liquid.root.destroy();
@@ -154,6 +220,11 @@ export class Game {
   }
 
   tick(ticker) {
+    if (this.paused) {
+      this.updateDebug(ticker, 0, 0, 0);
+      return;
+    }
+
     const step = config.world.timeStep;
     this.acc += ticker.deltaMS / 1000;
     let n = 0;
@@ -184,8 +255,21 @@ export class Game {
       this.liquid.sync();
     }
     const drawMs = performance.now() - tDraw;
-
+    this.checkWin(ticker);
     this.updateDebug(ticker, n, physMs, drawMs);
+  }
+
+  checkWin(ticker) {
+    if (this.paused || this.won || !this.liquid) return;
+    this.checkAcc += ticker.deltaMS / 1000;
+    if (this.checkAcc < config.flask.checkEvery) return;
+    this.checkAcc = 0;
+    const flasks = this.flasks;
+    if (flasks.length === 0) return;
+    for (let i = 0; i < flasks.length; i++) {
+      if (!flasks[i].matches(this.liquid)) return;
+    }
+    this.onWin();
   }
 
   updateDebug(ticker, n, physMs, drawMs) {
@@ -211,6 +295,7 @@ export class Game {
   drawDebug() {
     const g = this.debugGfx;
     g.clear();
+    if (!this.world || !this.liquid) return;
     const lf = window.liquidfun;
     const bodies = this.world.bodies;
     for (let i = 0; i < bodies.length; i++) {

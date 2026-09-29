@@ -1,6 +1,7 @@
-import { Sprite } from "./vendor/pixi.min.mjs";
+import { Graphics, Sprite } from "./vendor/pixi.min.mjs";
 import { config } from "./config.js";
 import { GameObject } from "./GameObject.js";
+import { assetUrl } from "./assets.js";
 
 // ponytail: hand-fit boxes to flask1.png and flask2.png. Refit config.flask.types if those files change.
 export class Flask extends GameObject {
@@ -36,18 +37,66 @@ export class Flask extends GameObject {
     this.fillX = fill.cx;
     this.fillY = fill.cy;
     this.amount = options.amount ?? 0;
+    this.targetColor = options.targetColor ?? config.flask.liquidColor;
 
     const ppm = config.world.pixelsPerMeter;
-    const sprite = Sprite.from(
-      new URL(`./assets/${art.src}`, import.meta.url).href,
-    );
+    const sprite = Sprite.from(assetUrl(art.src));
     sprite.anchor.set(0.5);
     sprite.width = width * ppm;
     sprite.height = width * (art.h / art.w) * ppm;
-    // sprite.blendMode = "multiply";
     if (options.color != null) sprite.tint = options.color;
     this.view = sprite;
     this.container.addChild(this.view);
+
+    const swatchR = config.flask.swatchR;
+    const tint =
+      (this.targetColor[0] << 16) |
+      (this.targetColor[1] << 8) |
+      this.targetColor[2];
+    this.swatch = new Graphics()
+      .circle(0, -sprite.height / 2 - swatchR - 6, swatchR)
+      .fill(tint)
+      .stroke({ width: 3, color: config.ui.cream });
+    this.container.addChild(this.swatch);
+  }
+
+  fillAabb() {
+    const lf = window.liquidfun;
+    if (!this._aabb) {
+      this._aabb = new lf.b2AABB();
+      this._pt = new lf.b2Vec2();
+    }
+    const hx = this.innerW / 2;
+    const hy = this.innerH / 2;
+    const ox = this.fillX;
+    const oy = this.fillY;
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+    const corners = [
+      [ox - hx, oy - hy],
+      [ox + hx, oy - hy],
+      [ox - hx, oy + hy],
+      [ox + hx, oy + hy],
+    ];
+    for (let i = 0; i < 4; i++) {
+      this._pt.Set(corners[i][0], corners[i][1]);
+      const w = this.body.GetWorldPoint(this._pt);
+      if (w.x < minX) minX = w.x;
+      if (w.y < minY) minY = w.y;
+      if (w.x > maxX) maxX = w.x;
+      if (w.y > maxY) maxY = w.y;
+    }
+    this._aabb.lowerBound.Set(minX, minY);
+    this._aabb.upperBound.Set(maxX, maxY);
+    return this._aabb;
+  }
+
+  matches(liquid) {
+    const { n, rgb } = liquid.avgColorInAabb(this.fillAabb());
+    if (n < config.flask.minCount) return false;
+    return colorDist(rgb, this.targetColor) <= config.flask.colorTolerance;
   }
 }
 
@@ -110,3 +159,22 @@ function assertFlaskTypes() {
 }
 
 assertFlaskTypes();
+
+export function colorDist(a, b) {
+  const dr = a[0] - b[0];
+  const dg = a[1] - b[1];
+  const db = a[2] - b[2];
+  return Math.sqrt(dr * dr + dg * dg + db * db);
+}
+
+// function assertColorDist() {
+//   if (colorDist([0, 0, 0], [0, 0, 0]) !== 0) throw new Error("color dist zero");
+//   if (Math.abs(colorDist([255, 0, 0], [0, 0, 0]) - 255) > 1e-6) {
+//     throw new Error("color dist red");
+//   }
+//   if (!(colorDist([255, 48, 48], [200, 48, 48]) <= config.flask.colorTolerance)) {
+//     throw new Error("color tolerance should accept a close red");
+//   }
+// }
+
+// assertColorDist();

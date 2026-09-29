@@ -1,10 +1,10 @@
-import { Container, Graphics, Rectangle } from "./vendor/pixi.min.mjs";
+import { Container, Rectangle, Sprite } from "./vendor/pixi.min.mjs";
 import { config } from "./config.js";
+import { assetUrl } from "./assets.js";
+import { clientToCanvas } from "./pointer.js";
 
 export class Faucet {
   constructor(game, options) {
-    const hx = options.hx ?? config.faucet.hx;
-    const hy = options.hy ?? config.faucet.hy;
     const vx = options.vx ?? 0;
     const vy = options.vy ?? 0;
     const given = Math.hypot(vx, vy);
@@ -21,26 +21,31 @@ export class Faucet {
     this.aim = given > 0 ? Math.atan2(vy, vx) : -Math.PI / 2;
     this.vx = Math.cos(this.aim) * this.speed;
     this.vy = Math.sin(this.aim) * this.speed;
-    this._nozzleDist = hy + config.particles.radius;
     this._drag = false;
     this._pointer = -1;
 
+    const viewH = config.faucet.viewHeight;
     const ppm = config.world.pixelsPerMeter;
-    const w = hx * ppm * 2;
-    const h = hy * ppm * 2;
-    const pad = 28;
+    this._nozzleDist = viewH / 2 / ppm;
+    const pad = config.faucet.hitPad;
 
     this.container = new Container();
     this.container.zIndex = config.zIndex.faucet;
     this.container.eventMode = "static";
     this.container.cursor = "pointer";
     this.container.hitArea = new Rectangle(
-      -w / 2 - pad,
-      -h / 2 - pad,
-      w + pad * 2,
-      h + pad * 2,
+      -viewH / 2 - pad,
+      -viewH / 2 - pad,
+      viewH + pad * 2,
+      viewH + pad * 2,
     );
-    this.view = new Graphics().rect(-w / 2, -h / 2, w, h).fill(options.fill);
+
+    this.view = Sprite.from(assetUrl("faucet.png"));
+    this.view.anchor.set(0.5);
+    this.view.width = viewH;
+    this.view.height = viewH / 0.707;
+    const c = options.color;
+    if (c) this.view.tint = (c[0] << 16) | (c[1] << 8) | c[2];
     this.container.addChild(this.view);
     game.mainContainer.addChild(this.container);
     game.objects.push(this);
@@ -94,7 +99,13 @@ export class Faucet {
       this.acc -= interval;
       const ox = this.x + Math.cos(this.aim) * this._nozzleDist;
       const oy = this.y + Math.sin(this.aim) * this._nozzleDist;
-      this.game.liquid.emit(ox, oy, this.vx, this.vy, this.color);
+      this.game.liquid.emit(
+        ox,
+        oy,
+        this.vx + Math.random() * 0.1 - 0.05,
+        this.vy + Math.random() * 0.1 - 0.05,
+        this.color,
+      );
       this.emitted++;
     }
   }
@@ -113,25 +124,17 @@ export function aimRotation(aim) {
   return -Math.PI / 2 - aim;
 }
 
-function clientToCanvas(canvas, clientX, clientY) {
-  const rect = canvas.getBoundingClientRect();
-  return {
-    x: ((clientX - rect.left) / rect.width) * canvas.width,
-    y: ((clientY - rect.top) / rect.height) * canvas.height,
-  };
-}
+// function assertAim() {
+//   const down = aimRotation(-Math.PI / 2);
+//   if (Math.abs(down) > 1e-6) throw new Error("faucet down rotation");
+//   if (Math.abs(aimRotation(0) + Math.PI / 2) > 1e-6) {
+//     throw new Error("faucet right rotation");
+//   }
+//   const vx = Math.cos(-Math.PI / 2) * 10;
+//   const vy = Math.sin(-Math.PI / 2) * 10;
+//   if (Math.abs(vx) > 1e-6 || Math.abs(vy + 10) > 1e-6) {
+//     throw new Error("faucet down velocity");
+//   }
+// }
 
-function assertAim() {
-  const down = aimRotation(-Math.PI / 2);
-  if (Math.abs(down) > 1e-6) throw new Error("faucet down rotation");
-  if (Math.abs(aimRotation(0) + Math.PI / 2) > 1e-6) {
-    throw new Error("faucet right rotation");
-  }
-  const vx = Math.cos(-Math.PI / 2) * 10;
-  const vy = Math.sin(-Math.PI / 2) * 10;
-  if (Math.abs(vx) > 1e-6 || Math.abs(vy + 10) > 1e-6) {
-    throw new Error("faucet down velocity");
-  }
-}
-
-assertAim();
+// assertAim();

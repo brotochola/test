@@ -7,7 +7,7 @@ export const config = {
     antialias: false,
   },
   game: {
-    debug: !true,
+    debug: true,
   },
   world: {
     gravityX: 0,
@@ -26,6 +26,7 @@ export const config = {
     friction: 0.45,
     restitution: 0.05,
     margin: 0.15,
+    pivotSize: 48,
   },
   level: {
     wallThickness: 0.8,
@@ -48,6 +49,7 @@ export const config = {
     blendMode: "normal",
     offscreenX: -4096,
     offscreenY: -4096,
+    gridCell: 0.6,
   },
   metaball: {
     threshold: 0.42,
@@ -65,16 +67,33 @@ export const config = {
     faucet: 2,
     flask: 2,
     debug: 3,
+    hud: 10,
+    dialog: 11,
   },
   faucet: {
     hx: 0.22,
     hy: 0.45,
     rate: 40,
     speed: 6,
+    viewHeight: 96,
+    hitPad: 36,
+  },
+  ui: {
+    ink: 0x201338,
+    orange: 0xf58324,
+    purple: 0x7845d8,
+    cream: 0xfff6e8,
+    fontSize: 28,
+    titleSize: 40,
+    dim: 0x201338,
   },
   flask: {
     width: 5,
     liquidColor: [120, 190, 255, 255],
+    checkEvery: 0.25,
+    colorTolerance: 48,
+    minCount: 20,
+    swatchR: 14,
     types: {
       1: {
         src: "flask1.png",

@@ -7,6 +7,7 @@ import {
 } from "./vendor/pixi.min.mjs";
 import { config } from "./config.js";
 import { createMetaballFilter } from "./metaballFilter.js";
+import { SpatialHash } from "./SpatialHash.js";
 
 export class LiquidParticles {
   constructor(game) {
@@ -17,6 +18,7 @@ export class LiquidParticles {
     this.system = createParticleSystem(game.world);
     this._circle = null;
     this._pgd = null;
+    this.grid = new SpatialHash(config.particles.gridCell);
 
     this.root = new Container();
     this.root.filters = [createMetaballFilter()];
@@ -119,6 +121,25 @@ export class LiquidParticles {
         p.y = offY;
       }
     }
+    this.grid.rebuild(buffer, n);
+  }
+
+  avgColorInAabb(aabb) {
+    const pos = this.system.GetPositionBuffer();
+    const colors = this.system.GetColorBuffer();
+    let n = 0;
+    let r = 0;
+    let g = 0;
+    let b = 0;
+    this.grid.queryAABB(aabb, pos, (i) => {
+      const i4 = i * 4;
+      r += colors[i4];
+      g += colors[i4 + 1];
+      b += colors[i4 + 2];
+      n++;
+    });
+    if (n === 0) return { n: 0, rgb: [0, 0, 0] };
+    return { n, rgb: [r / n, g / n, b / n] };
   }
 }
 
