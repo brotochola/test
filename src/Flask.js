@@ -3,7 +3,9 @@ import { config } from "./config.js";
 import { GameObject } from "./GameObject.js";
 import { assetUrl } from "./assets.js";
 
-// ponytail: hand-fit boxes to flask1.png and flask2.png. Refit config.flask.types if those files change.
+const COIN = assetUrl("audio/coin.mp3");
+
+// ponytail: hand-fit boxes to flask1_front.png. Refit config.flask.types if that file changes.
 export class Flask extends GameObject {
   constructor(game, options) {
     const lf = window.liquidfun;
@@ -144,8 +146,10 @@ export class Flask extends GameObject {
     const { n, rgb } = liquid.avgColorInAabb(aabb);
     this.countText.text = `${n}/${this.need}`;
     const delta = n - this._lastN;
-    if (delta > 0 && this.game.fx) {
+    if (delta > 0) {
       for (let i = 0; i < delta; i++) {
+        this.game.sound.play(COIN, { ascendingPitch: true, volume: 0.4 });
+        if (!this.game.fx) continue;
         const count = Math.random() < 0.5 ? 2 : 4;
         const x =
           aabb.lowerBound.x +

@@ -1,4 +1,4 @@
-import { Container, Sprite, Text } from "./vendor/pixi.min.mjs";
+import { Container, Rectangle, Sprite, Text } from "./vendor/pixi.min.mjs";
 import { config } from "./config.js";
 import { assetUrl } from "./assets.js";
 
@@ -67,8 +67,34 @@ export class Hud {
     this.restartBtn.eventMode = "static";
     this.restartBtn.cursor = "pointer";
     this.restartBtn.visible = false;
-    this.restartBtn.on("pointertap", () => game.restartLevel());
+    this.restartBtn.on("pointertap", () => {
+      game.click();
+      game.restartLevel();
+    });
     this.root.addChild(this.restartBtn);
+
+    this.muteBtn = new Text({
+      text: "Mute",
+      style: {
+        fill: config.ui.cream,
+        fontSize: 22,
+        fontFamily: config.ui.fontFamily,
+        fontWeight: "600",
+      },
+    });
+    this.muteBtn.anchor.set(1, 0.5);
+    this.muteBtn.position.set(this.playBtn.x - 70, btnY);
+    this.muteBtn.eventMode = "static";
+    this.muteBtn.cursor = "pointer";
+    this.muteBtn.hitArea = new Rectangle(-88, -28, 96, 56);
+    this.muteBtn.on("pointertap", () => {
+      const on = !game.sound.muted;
+      if (on) game.click();
+      game.sound.setMuted(on);
+      if (!on) game.click();
+      this.muteBtn.text = on ? "Muted" : "Mute";
+    });
+    this.root.addChild(this.muteBtn);
 
     game.app.stage.addChild(this.root);
   }

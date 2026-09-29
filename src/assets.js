@@ -4,7 +4,6 @@ export const ASSET_FILES = [
   "bg.png",
   "flask1_front.png",
   "flask1_back.png",
-  "flask2.png",
   "faucet.png",
   "platform.png",
   "short_platform.png",

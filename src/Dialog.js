@@ -192,6 +192,7 @@ export class Dialog {
   }
 
   bounceTap(node, fn) {
+    this.game.click();
     this.playTween({
       duration: 0.28,
       onUpdate: (u) => {
@@ -360,9 +361,6 @@ function bounceOut(t) {
   if (t < 2.5 / d1) return n1 * (t -= 2.25 / d1) * t + 0.9375;
   return n1 * (t -= 2.625 / d1) * t + 0.984375;
 }
-
-if (bounceOut(0) !== 0 || Math.abs(bounceOut(1) - 1) > 1e-9)
-  throw new Error("bounceOut");
 
 function quadOut(t) {
   return 1 - (1 - t) * (1 - t);

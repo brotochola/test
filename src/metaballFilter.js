@@ -33,15 +33,3 @@ function smoothstep(e0, e1, x) {
   const t = Math.min(1, Math.max(0, (x - e0) / (e1 - e0)));
   return t * t * (3 - 2 * t);
 }
-
-function assertBody() {
-  const { threshold } = config.metaball;
-  if (metaballBody(0, threshold) !== 0) {
-    throw new Error("metaball outside should be empty");
-  }
-  if (metaballBody(1, threshold) !== 1) {
-    throw new Error("metaball high alpha should be solid");
-  }
-}
-
-// assertBody();

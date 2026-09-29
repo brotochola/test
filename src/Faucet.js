@@ -3,6 +3,8 @@ import { config } from "./config.js";
 import { assetUrl } from "./assets.js";
 import { clientToCanvas } from "./pointer.js";
 
+const POUR = assetUrl("audio/faucet.wav");
+
 export class Faucet {
   constructor(game, options) {
     const vx = options.vx ?? 0;
@@ -23,6 +25,7 @@ export class Faucet {
     this.vy = Math.sin(this.aim) * this.speed;
     this._drag = false;
     this._pointer = -1;
+    this._pour = null;
 
     const viewH = config.faucet.viewHeight;
     const ppm = config.world.pixelsPerMeter;
@@ -74,6 +77,7 @@ export class Faucet {
   }
 
   reset() {
+    this.stopPour();
     this.emitted = 0;
     this.acc = 0;
   }
@@ -102,9 +106,24 @@ export class Faucet {
     this.container.rotation = aimRotation(this.aim);
   }
 
+  startPour() {
+    if (this._pour != null) return;
+    this._pour = this.game.sound.play(POUR, { loop: true, volume: 0.3 });
+  }
+
+  stopPour() {
+    if (this._pour == null) return;
+    this.game.sound.stopLooping(this._pour);
+    this._pour = null;
+  }
+
   step(dt) {
     if (this.game.mode !== "play") return;
-    if (this.emitted >= this.amount) return;
+    if (this.emitted >= this.amount) {
+      this.stopPour();
+      return;
+    }
+    this.startPour();
     this.acc += dt;
     const interval = 1 / this.rate;
     if (!(interval > 0) || interval === Infinity) return;
@@ -122,9 +141,11 @@ export class Faucet {
       Math.random() > 0.7 && this.game.fx?.burst(ox, oy, config.fx.faucet);
       this.emitted++;
     }
+    if (this.emitted >= this.amount) this.stopPour();
   }
 
   destroy() {
+    this.stopPour();
     this._drag = false;
     this.container.off("pointerdown", this._onDown);
     window.removeEventListener("pointermove", this._onMove);
@@ -137,18 +158,3 @@ export class Faucet {
 export function aimRotation(aim) {
   return -Math.PI / 2 - aim;
 }
-
-// function assertAim() {
-//   const down = aimRotation(-Math.PI / 2);
-//   if (Math.abs(down) > 1e-6) throw new Error("faucet down rotation");
-//   if (Math.abs(aimRotation(0) + Math.PI / 2) > 1e-6) {
-//     throw new Error("faucet right rotation");
-//   }
-//   const vx = Math.cos(-Math.PI / 2) * 10;
-//   const vy = Math.sin(-Math.PI / 2) * 10;
-//   if (Math.abs(vx) > 1e-6 || Math.abs(vy + 10) > 1e-6) {
-//     throw new Error("faucet down velocity");
-//   }
-// }
-
-// assertAim();

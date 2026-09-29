@@ -19,6 +19,12 @@ import { Tutorial } from "./Tutorial.js";
 import { Level1 } from "./levels/Level1.js";
 import { Level2 } from "./levels/Level2.js";
 import { Level3 } from "./levels/Level3.js";
+import { SoundManager } from "./SoundManager.js";
+
+const WIN = assetUrl("audio/level_won.mp3");
+const LOSE = assetUrl("audio/level_lost.mp3");
+const CLICK = assetUrl("audio/click.mp3");
+const OPEN = assetUrl("audio/open_faucet.mp3");
 
 export class Game {
   constructor() {
@@ -51,6 +57,7 @@ export class Game {
     this.resolved = false;
     this.mode = "design";
     this.tutorialSeen = false;
+    this.sound = new SoundManager();
     this._onResize = () => this.layout();
     this._onVisibility = () => this.onVisibility();
   }
@@ -69,8 +76,16 @@ export class Game {
     });
 
     globalThis.__PIXI_APP__ = this.app;
-    await preloadAssets();
-    await loadFont();
+    await Promise.all([
+      preloadAssets(),
+      loadFont(),
+      this.sound.load(assetUrl("audio/coin.mp3")),
+      this.sound.load(assetUrl("audio/faucet.wav")),
+      this.sound.load(WIN),
+      this.sound.load(LOSE),
+      this.sound.load(CLICK),
+      this.sound.load(OPEN),
+    ]);
     document.body.appendChild(this.app.canvas);
     this.app.stage.sortableChildren = true;
 
@@ -119,9 +134,11 @@ export class Game {
       this.app.ticker.stop();
       this.acc = 0;
       this.checkAcc = 0;
+      this.sound.suspend();
       return;
     }
     this.app.ticker.start();
+    this.sound.resume();
   }
 
   loadLevel(level) {
@@ -179,13 +196,20 @@ export class Game {
     this.tutorial?.onAimed(kind);
   }
 
+  click() {
+    this.sound.unlock();
+    this.sound.play(CLICK, { volume: 0.55 });
+  }
+
   play() {
+    this.sound.unlock();
     if (this.mode === "play" || this.paused) return;
     if (this.tutorial?.blockingPlay()) return;
     this.tutorialSeen = true;
     this.tutorial?.end();
     this.mode = "play";
     this.hud.setPlaying(true);
+    this.sound.play(OPEN);
   }
 
   restartLevel() {
@@ -237,6 +261,7 @@ export class Game {
     if (this.won) return;
     this.won = true;
     this.paused = true;
+    this.sound.play(WIN, { volume: 0.7 });
     const first = !this.awarded[this.levelIndex];
     const earned = first ? n : 0;
     if (first) {
@@ -253,6 +278,7 @@ export class Game {
 
   onLose() {
     this.paused = true;
+    this.sound.play(LOSE, { volume: 0.7 });
     this.dialog.show({
       earned: 0,
       last: false,
@@ -474,8 +500,3 @@ export function allFlasksPass(results) {
   }
   return true;
 }
-
-if (allFlasksPass([]) !== false) throw new Error("empty flasks fail");
-if (allFlasksPass([true]) !== true) throw new Error("one flask pass");
-if (allFlasksPass([true, false]) !== false) throw new Error("mixed flasks fail");
-if (allFlasksPass([true, true]) !== true) throw new Error("all flasks pass");

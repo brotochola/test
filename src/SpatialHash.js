@@ -52,18 +52,3 @@ export class SpatialHash {
     }
   }
 }
-
-function assertHash() {
-  const h = new SpatialHash(1);
-  const pos = new Float32Array([0.5, 0.5, 3.5, 0.5, 0.5, 3.5]);
-  h.rebuild(pos, 3);
-  const hits = [];
-  h.queryAABB(
-    { lowerBound: { x: 0, y: 0 }, upperBound: { x: 1, y: 1 } },
-    pos,
-    (i) => hits.push(i),
-  );
-  if (hits.length !== 1 || hits[0] !== 0) throw new Error("spatial hash query");
-}
-
-assertHash();

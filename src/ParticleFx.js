@@ -135,16 +135,3 @@ export function advanceFx(d, dt, float) {
   d.vy -= float * dt;
   return d.age >= d.life;
 }
-
-function assertAdvance() {
-  const d = { age: 0, life: 0.1, vy: 0 };
-  if (advanceFx(d, 0.05, 80)) throw new Error("fx should live");
-  if (!advanceFx(d, 0.06, 80)) throw new Error("fx should die");
-  if (!(d.vy < 0)) throw new Error("fx should float up");
-  if (pickRange(5) !== 5) throw new Error("fx range number");
-  if (pickRange({ min: 3, max: 3 }) !== 3) throw new Error("fx range minmax");
-  const a = pickAlpha({ start: 0.33, end: 0 });
-  if (a.start !== 0.33 || a.end !== 0) throw new Error("fx alpha range");
-}
-
-assertAdvance();

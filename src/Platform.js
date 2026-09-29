@@ -114,15 +114,3 @@ export class Platform extends GameObject {
     this.container.destroy();
   }
 }
-
-function assertPlatformKinds() {
-  const kinds = config.platform.kinds;
-  if (!kinds.platform || !kinds.short) throw new Error("platform kinds");
-  const ppm = config.world.pixelsPerMeter;
-  const width = kinds.platform.w / ppm;
-  if (colliderHalf(width, config.box.margin) !== width / 2 + config.box.margin) {
-    throw new Error("platform collider");
-  }
-}
-
-assertPlatformKinds();

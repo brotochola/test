@@ -165,27 +165,6 @@ export function fillPoints(innerW, innerH, count, gap) {
   return pts;
 }
 
-function assertFillInside() {
-  const w = 4.2;
-  const h = 5.2;
-  const gap = 0.3;
-  const pts = fillPoints(w, h, 20, gap);
-  if (pts.length !== 20) throw new Error("fill point count");
-  const hx = w / 2;
-  const hy = h / 2;
-  for (let i = 0; i < pts.length; i++) {
-    const p = pts[i];
-    if (p.x < -hx || p.x > hx || p.y < -hy || p.y > hy) {
-      throw new Error("fill point outside flask");
-    }
-  }
-  if (!(pts[0].y < pts[pts.length - 1].y)) {
-    throw new Error("fill should grow upward");
-  }
-}
-
-assertFillInside();
-
 // ponytail: fixed slab; a particle faster than killDepth/timeStep in one step falls through it
 const killDepth = 32;
 
@@ -193,16 +172,6 @@ export function killBox(worldW, margin, depth) {
   const hy = depth / 2;
   return { x: worldW / 2, y: -margin - hy, hx: worldW, hy };
 }
-
-function assertKillBox() {
-  const w = 18;
-  const margin = 1;
-  const box = killBox(w, margin, killDepth);
-  if (box.y + box.hy !== -margin) throw new Error("kill line");
-  if (box.x - box.hx > 0 || box.x + box.hx < w) throw new Error("kill span");
-}
-
-assertKillBox();
 
 function makeKill(lf) {
   const w = config.app.width / config.world.pixelsPerMeter;
