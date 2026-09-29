@@ -41,6 +41,7 @@ export class Flask extends GameObject {
 
     const ppm = config.world.pixelsPerMeter;
     const sprite = Sprite.from(assetUrl(art.src));
+    // sprite.blendMode = "hardlight";
     sprite.anchor.set(0.5);
     sprite.width = width * ppm;
     sprite.height = width * (art.h / art.w) * ppm;
@@ -74,6 +75,7 @@ export class Flask extends GameObject {
     this.countText.anchor.set(0.5);
     this.countText.position.set(label.position.x, label.position.y);
     this.container.addChild(this.countText);
+    this._lastN = 0;
   }
 
   fillAabb() {
@@ -110,8 +112,24 @@ export class Flask extends GameObject {
   }
 
   sample(liquid) {
-    const { n, rgb } = liquid.avgColorInAabb(this.fillAabb());
+    const aabb = this.fillAabb();
+    const { n, rgb } = liquid.avgColorInAabb(aabb);
     this.countText.text = `${n}/${this.need}`;
+    const delta = n - this._lastN;
+    if (delta > 0 && this.game.fx) {
+      for (let i = 0; i < delta; i++) {
+        const count = Math.random() < 0.5 ? 2 : 4;
+        const x =
+          aabb.lowerBound.x +
+          Math.random() * (aabb.upperBound.x - aabb.lowerBound.x);
+        const y =
+          aabb.lowerBound.y +
+          Math.random() * (aabb.upperBound.y - aabb.lowerBound.y);
+        if (Math.random() > 0.9)
+          this.game.fx.burst(x, y, { ...config.fx.flask, count });
+      }
+    }
+    this._lastN = n;
     if (n < this.need) return false;
     return colorDist(rgb, this.targetColor) <= config.flask.colorTolerance;
   }

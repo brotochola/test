@@ -12,6 +12,7 @@ import { Platform } from "./Platform.js";
 import { Faucet } from "./Faucet.js";
 import { Flask } from "./Flask.js";
 import { LiquidParticles } from "./LiquidParticles.js";
+import { ParticleFx } from "./ParticleFx.js";
 import { Dialog } from "./Dialog.js";
 import { Hud } from "./Hud.js";
 import { Level1 } from "./levels/Level1.js";
@@ -27,6 +28,7 @@ export class Game {
     this.objects = [];
     this.world = null;
     this.liquid = null;
+    this.fx = null;
     this.flasks = [];
     this.debug = config.game.debug;
     this.acc = 0;
@@ -133,6 +135,7 @@ export class Game {
     this.flasks = flasks;
 
     this.liquid = new LiquidParticles(this);
+    this.fx = new ParticleFx(this);
 
     const faucets = spec.faucets ?? [];
     for (let i = 0; i < faucets.length; i++) new Faucet(this, faucets[i]);
@@ -186,6 +189,10 @@ export class Game {
       world.DestroyParticleSystem(this.liquid.system);
       this.liquid.root.destroy();
       this.liquid = null;
+    }
+    if (this.fx) {
+      this.fx.destroy();
+      this.fx = null;
     }
   }
 
@@ -246,6 +253,7 @@ export class Game {
     }
     const drawMs = performance.now() - tDraw;
     this.checkWin(ticker);
+    if (this.fx) this.fx.update(ticker.deltaMS / 1000);
     this.updateDebug(ticker, n, physMs, drawMs);
   }
 
@@ -256,10 +264,11 @@ export class Game {
     this.checkAcc = 0;
     const flasks = this.flasks;
     if (flasks.length === 0) return;
+    let ok = true;
     for (let i = 0; i < flasks.length; i++) {
-      if (!flasks[i].sample(this.liquid)) return;
+      if (!flasks[i].sample(this.liquid)) ok = false;
     }
-    this.onWin();
+    if (ok) this.onWin();
   }
 
   updateDebug(ticker, n, physMs, drawMs) {

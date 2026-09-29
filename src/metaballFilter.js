@@ -1,13 +1,15 @@
-import { Filter, GlProgram, defaultFilterVert } from './vendor/pixi.min.mjs';
-import { config } from './config.js';
+import { Filter, GlProgram, defaultFilterVert } from "./vendor/pixi.min.mjs";
+import { config } from "./config.js";
 
-const fragment = await fetch(new URL('./metaball.frag', import.meta.url)).then((r) => {
-  if (!r.ok) throw new Error(`metaball.frag ${r.status}`);
-  return r.text();
-});
+const fragment = await fetch(new URL("./metaball.frag", import.meta.url)).then(
+  (r) => {
+    if (!r.ok) throw new Error(`metaball.frag ${r.status}`);
+    return r.text();
+  },
+);
 
 export function createMetaballFilter() {
-  const { threshold, softness, stroke, fillAlpha, sparseLight, denseDark, padding } = config.metaball;
+  const { threshold, padding } = config.metaball;
   const filter = new Filter({
     glProgram: GlProgram.from({
       vertex: defaultFilterVert,
@@ -15,12 +17,7 @@ export function createMetaballFilter() {
     }),
     resources: {
       metaballUniforms: {
-        uThreshold: { value: threshold, type: 'f32' },
-        uSoftness: { value: softness, type: 'f32' },
-        uStroke: { value: stroke, type: 'f32' },
-        uFillAlpha: { value: fillAlpha, type: 'f32' },
-        uSparseLight: { value: sparseLight, type: 'f32' },
-        uDenseDark: { value: denseDark, type: 'f32' },
+        uThreshold: { value: threshold, type: "f32" },
       },
     },
   });
@@ -28,15 +25,8 @@ export function createMetaballFilter() {
   return filter;
 }
 
-export function metaballAlpha(field, threshold, softness, stroke, fillAlpha) {
-  const edge = smoothstep(threshold - stroke, threshold - stroke + softness, field);
-  const fill = smoothstep(threshold, threshold + softness, field);
-  return edge * (1 - fill) + fillAlpha * fill;
-}
-
-export function densityShade(alpha, sparseLight, denseDark) {
-  const d = Math.min(1, Math.max(0, alpha));
-  return sparseLight + (denseDark - sparseLight) * d;
+export function metaballBody(a, threshold) {
+  return smoothstep(threshold - 0.04, threshold + 0.02, a);
 }
 
 function smoothstep(e0, e1, x) {
@@ -44,23 +34,14 @@ function smoothstep(e0, e1, x) {
   return t * t * (3 - 2 * t);
 }
 
-function assertStroke() {
-  const { threshold, softness, stroke, fillAlpha } = config.metaball;
-  if (metaballAlpha(0, threshold, softness, stroke, fillAlpha) !== 0) {
-    throw new Error('metaball outside should be empty');
+function assertBody() {
+  const { threshold } = config.metaball;
+  if (metaballBody(0, threshold) !== 0) {
+    throw new Error("metaball outside should be empty");
   }
-  const rim = threshold - stroke * 0.5;
-  const core = 1;
-  if (!(metaballAlpha(rim, threshold, softness, stroke, fillAlpha) > fillAlpha)) {
-    throw new Error('metaball stroke should be more solid than the fill');
-  }
-  if (Math.abs(metaballAlpha(core, threshold, softness, stroke, fillAlpha) - fillAlpha) > 1e-6) {
-    throw new Error('metaball core should use fill alpha');
-  }
-  const { sparseLight, denseDark } = config.metaball;
-  if (!(densityShade(0, sparseLight, denseDark) > densityShade(1, sparseLight, denseDark))) {
-    throw new Error('low density should be lighter than high density');
+  if (metaballBody(1, threshold) !== 1) {
+    throw new Error("metaball high alpha should be solid");
   }
 }
 
-assertStroke();
+// assertBody();

@@ -8,6 +8,7 @@ export const ASSET_FILES = [
   "platform.png",
   "short_platform.png",
   "label.png",
+  "bubble.png",
   "coin.png",
   "hud-chip.png",
   "btn-restart.png",

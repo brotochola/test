@@ -26,7 +26,7 @@ export class Faucet {
 
     const viewH = config.faucet.viewHeight;
     const ppm = config.world.pixelsPerMeter;
-    this._nozzleDist = viewH / 2 / ppm;
+    this._nozzleDist = viewH / 2 / ppm + 0.5;
     const pad = config.faucet.hitPad;
 
     this.container = new Container();
@@ -106,6 +106,7 @@ export class Faucet {
         this.vy + Math.random() * 0.1 - 0.05,
         this.color,
       );
+      Math.random() > 0.7 && this.game.fx?.burst(ox, oy, config.fx.faucet);
       this.emitted++;
     }
   }
