@@ -133,20 +133,6 @@ export class Game {
     this.flasks = flasks;
 
     this.liquid = new LiquidParticles(this);
-    for (let i = 0; i < flasks.length; i++) {
-      const flask = flasks[i];
-      if (flask.amount > 0) {
-        this.liquid.fillFlask(
-          flask.body,
-          flask.innerW,
-          flask.innerH,
-          flask.amount,
-          config.flask.liquidColor,
-          flask.fillX,
-          flask.fillY,
-        );
-      }
-    }
 
     const faucets = spec.faucets ?? [];
     for (let i = 0; i < faucets.length; i++) new Faucet(this, faucets[i]);

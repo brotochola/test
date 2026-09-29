@@ -100,7 +100,7 @@ function label(text, y, fontSize, fill) {
       fill,
       fontSize,
       fontFamily: config.ui.fontFamily,
-      fontWeight: "700",
+      fontWeight: "600",
       align: "center",
     },
   });
@@ -124,7 +124,7 @@ function labeledButton(src, caption, y, fill, onTap) {
       fill,
       fontSize: config.ui.fontSize,
       fontFamily: config.ui.fontFamily,
-      fontWeight: "700",
+      fontWeight: "600",
     },
   });
   text.anchor.set(0.5);

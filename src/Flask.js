@@ -36,7 +36,7 @@ export class Flask extends GameObject {
     this.innerH = fill.hy * 2;
     this.fillX = fill.cx;
     this.fillY = fill.cy;
-    this.amount = options.amount ?? 0;
+    this.need = options.amount || config.flask.minCount;
     this.targetColor = options.targetColor ?? config.flask.liquidColor;
 
     const ppm = config.world.pixelsPerMeter;
@@ -52,7 +52,7 @@ export class Flask extends GameObject {
       (this.targetColor[0] << 16) |
       (this.targetColor[1] << 8) |
       this.targetColor[2];
-    const labelW = config.flask.labelW;
+    const labelW = config.flask.labelW * s;
     const label = Sprite.from(assetUrl("label.png"));
     label.anchor.set(0.5);
     label.width = labelW;
@@ -63,12 +63,12 @@ export class Flask extends GameObject {
     this.container.addChild(this.label);
 
     this.countText = new Text({
-      text: "0",
+      text: `0/${this.need}`,
       style: {
         fill: config.ui.ink,
-        fontSize: 22,
+        fontSize: 22 * s,
         fontFamily: config.ui.fontFamily,
-        fontWeight: "700",
+        fontWeight: "600",
       },
     });
     this.countText.anchor.set(0.5);
@@ -111,8 +111,8 @@ export class Flask extends GameObject {
 
   sample(liquid) {
     const { n, rgb } = liquid.avgColorInAabb(this.fillAabb());
-    this.countText.text = String(n);
-    if (n < config.flask.minCount) return false;
+    this.countText.text = `${n}/${this.need}`;
+    if (n < this.need) return false;
     return colorDist(rgb, this.targetColor) <= config.flask.colorTolerance;
   }
 }

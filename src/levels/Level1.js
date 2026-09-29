@@ -9,7 +9,7 @@ export class Level1 extends Level {
       {
         x: 9,
         y: flaskY(1),
-        type: 2,
+        type: 1,
         amount: 0,
         targetColor: RED,
       },

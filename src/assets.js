@@ -32,7 +32,7 @@ export async function loadFont() {
   const face = new FontFace(
     "Fredoka",
     `url(${assetUrl("Fredoka-SemiBold.ttf")})`,
-    { weight: "700" },
+    { weight: "600" },
   );
   await face.load();
   document.fonts.add(face);

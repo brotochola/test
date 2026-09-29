@@ -18,7 +18,7 @@ export class Level3 extends Level {
       {
         x: 12.8,
         y: flaskY(2, 0.8),
-        type: 2,
+        type: 1,
         scale: 0.8,
         amount: 0,
         targetColor: BLUE,

@@ -21,7 +21,7 @@ export class Hud {
         fill: config.ui.cream,
         fontSize: 28,
         fontFamily: config.ui.fontFamily,
-        fontWeight: "700",
+        fontWeight: "600",
       },
     });
     this.coins.anchor.set(0, 0.5);
@@ -41,7 +41,7 @@ export class Hud {
         fill: config.ui.cream,
         fontSize: 22,
         fontFamily: config.ui.fontFamily,
-        fontWeight: "700",
+        fontWeight: "600",
       },
     });
     this.level.anchor.set(0.5);
