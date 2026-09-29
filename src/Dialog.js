@@ -68,7 +68,14 @@ export class Dialog {
     this.progress = label("", 22, config.ui.ink);
     this.dots = new Graphics();
     this.earned = label("", config.ui.fontSize, config.ui.orange);
-    this.card.addChild(this.title, this.progress, this.dots, this.earned);
+    this.demo = label("demo rewards", 18, config.ui.purple);
+    this.card.addChild(
+      this.title,
+      this.progress,
+      this.dots,
+      this.earned,
+      this.demo,
+    );
 
     this.again = labeledButton(
       "btn-secondary.png",
@@ -102,7 +109,8 @@ export class Dialog {
     this.title.y = top + 58;
     this.progress.y = this.title.y + 46;
     this.dots.position.set(0, this.progress.y + 34);
-    this.earned.y = this.dots.y + 38;
+    this.earned.y = this.dots.y + 34;
+    this.demo.y = this.earned.y + 30;
     this.next.root.y = bot - 74;
     this.again.root.y = this.next.root.y - BTN_H - BTN_GAP;
     this.ctaNote.y = bot + 22;
@@ -133,7 +141,8 @@ export class Dialog {
         : "Level complete!";
     this.progress.text = `Level ${level} of ${levels}`;
     this.earned.visible = !lost;
-    this.earned.text = earned > 0 ? `+${earned} coins` : "Already collected";
+    this.demo.visible = !lost;
+    this.earned.text = earned > 0 ? `+${earned}` : "Already collected";
     this.next.root.visible = !lost;
     this.next.text.text = last ? "Explore Scrambly" : "Next";
     this.again.root.y = lost
@@ -198,6 +207,7 @@ export class Dialog {
     this.next.root.scale.set(1);
     this.next.root.visible = true;
     this.earned.visible = true;
+    this.demo.visible = true;
     this.again.root.y = this.next.root.y - BTN_H - BTN_GAP;
   }
 

@@ -131,12 +131,27 @@ export class Game {
 
   onVisibility() {
     if (document.hidden) {
-      this.app.ticker.stop();
-      this.acc = 0;
-      this.checkAcc = 0;
-      this.sound.suspend();
+      this.stopClocks();
       return;
     }
+    if (!this.needsRotate()) this.startClocks();
+  }
+
+  needsRotate() {
+    return (
+      matchMedia("(pointer: coarse)").matches &&
+      window.innerWidth > window.innerHeight
+    );
+  }
+
+  stopClocks() {
+    this.app.ticker.stop();
+    this.acc = 0;
+    this.checkAcc = 0;
+    this.sound.suspend();
+  }
+
+  startClocks() {
     this.app.ticker.start();
     this.sound.resume();
   }
@@ -323,6 +338,11 @@ export class Game {
     canvas.style.height = `${h}px`;
     canvas.style.left = `${(window.innerWidth - w) / 2}px`;
     canvas.style.top = `${(window.innerHeight - h) / 2}px`;
+
+    const rotate = this.needsRotate();
+    document.getElementById("rotate")?.classList.toggle("on", rotate);
+    if (rotate) this.stopClocks();
+    else if (!document.hidden) this.startClocks();
   }
 
   toScreen(x, y) {
