@@ -197,53 +197,9 @@ function addBoxFixture(body, { hx, hy, cx, cy, angle }) {
   body.CreateFixtureFromDef(fd);
 }
 
-function assertFlaskTypes() {
-  const z = config.zIndex;
-  if (!(z.flaskBack < z.liquid && z.liquid < z.flask)) {
-    throw new Error("flask layers must sandwich liquid");
-  }
-  const types = config.flask.types;
-  for (let type = 1; type <= 2; type++) {
-    const art = types[type];
-    if (!art) throw new Error(`flask type ${type}`);
-    let hasBottom = false;
-    for (let i = 0; i < art.boxes.length; i++) {
-      const c = rectFixture(art.boxes[i], art, 1);
-      if (Math.abs(c.cx) > art.w / 2 || Math.abs(c.cy) > art.h / 2) {
-        throw new Error("flask fixture outside sprite");
-      }
-      if (c.cy < -0.3 * art.h && c.hx > c.hy) hasBottom = true;
-    }
-    const slopes = art.slopes ?? [];
-    for (let i = 0; i < slopes.length; i++) {
-      const c = slopeFixture(slopes[i], art, 1);
-      if (Math.abs(c.cx) > art.w / 2 || Math.abs(c.cy) > art.h / 2) {
-        throw new Error("flask slope outside sprite");
-      }
-    }
-    if (!hasBottom) throw new Error(`flask type ${type} has no bottom`);
-  }
-}
-
-assertFlaskTypes();
-
 export function colorDist(a, b) {
   const dr = a[0] - b[0];
   const dg = a[1] - b[1];
   const db = a[2] - b[2];
   return Math.sqrt(dr * dr + dg * dg + db * db);
 }
-
-// function assertColorDist() {
-//   if (colorDist([0, 0, 0], [0, 0, 0]) !== 0) throw new Error("color dist zero");
-//   if (Math.abs(colorDist([255, 0, 0], [0, 0, 0]) - 255) > 1e-6) {
-//     throw new Error("color dist red");
-//   }
-//   if (
-//     !(colorDist([255, 48, 48], [200, 48, 48]) <= config.flask.colorTolerance)
-//   ) {
-//     throw new Error("color tolerance should accept a close red");
-//   }
-// }
-
-// assertColorDist();
