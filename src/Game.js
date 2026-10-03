@@ -60,6 +60,7 @@ export class Game {
     this.mode = "design";
     this.tutorialFaucetSeen = false;
     this.tutorialPlankSeen = false;
+    this.tutorialMixSeen = false;
     this.splash = null;
     this.sound = new SoundManager();
     this._onResize = () => this.layout();
@@ -246,6 +247,8 @@ export class Game {
       this.tutorial?.start("faucet");
     } else if (this.levelIndex === 1 && !this.tutorialPlankSeen) {
       this.tutorial?.start("platform");
+    } else if (this.levelIndex === 2 && !this.tutorialMixSeen) {
+      this.tutorial?.start("mix");
     }
   }
 
@@ -270,6 +273,7 @@ export class Game {
     if (this.tutorial?.blockingPlay()) return;
     if (this.levelIndex === 0) this.tutorialFaucetSeen = true;
     else if (this.levelIndex === 1) this.tutorialPlankSeen = true;
+    else if (this.levelIndex === 2) this.tutorialMixSeen = true;
     this.tutorial?.end();
     this.mode = "play";
     this.hud.setPlaying(true);

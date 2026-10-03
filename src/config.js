@@ -111,6 +111,7 @@ export const config = {
         "Welcome to Potion Mix! Fill each flask with the right amount and color.\nRotate the faucet to aim.",
       platform:
         "You can also rotate planks to guide the liquid into the flask.",
+      mix: "Some potions need two colors mixed together.\nPour both into the flask to match the label.",
     },
   },
   fx: {

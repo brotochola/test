@@ -22,6 +22,7 @@ export class Tutorial {
     this._typeAcc = 0;
     this._typing = false;
     this._leaving = false;
+    this._coachGone = false;
 
     const cfg = config.tutorial;
     this.root = new Container();
@@ -102,8 +103,10 @@ export class Tutorial {
     this.drop();
     this.stopTweens();
     this._leaving = false;
+    this._coachGone = false;
     this.active = true;
     this.root.visible = true;
+    this.root.eventMode = kind === "mix" ? "none" : "passive";
     this._t = 0;
     this._allow.faucet = false;
     this._allow.platform = false;
@@ -116,7 +119,7 @@ export class Tutorial {
     this._typing = false;
     this.hand.visible = true;
     this.overlay.alpha = 1;
-    this.overlay.eventMode = "static";
+    this.overlay.eventMode = kind === "mix" ? "none" : "static";
     this.fox.position.set(this._foxX, this._foxY);
     this.fox.scale.set(0);
     this.bubble.scale.set(0);
@@ -165,13 +168,29 @@ export class Tutorial {
     this.hand.visible = false;
     this.hand.rotation = 0;
     this.overlay.eventMode = "none";
+    this.root.eventMode = "none";
     if (!this.root.visible || this._leaving) return;
     this.stopTweens();
     this._leaving = true;
-    this.popOut();
+    if (this._coachGone) {
+      this.finishEnd();
+      return;
+    }
+    this.popCoach(() => this.finishEnd());
   }
 
-  popOut() {
+  dismissCoach() {
+    this.overlay.eventMode = "none";
+    this.root.eventMode = "none";
+    this._typing = false;
+    this.arrow.visible = false;
+    if (this._coachGone) return;
+    this._coachGone = true;
+    this.stopTweens();
+    this.popCoach();
+  }
+
+  popCoach(onDone) {
     const cfg = config.tutorial;
     const foxSx = this.fox.scale.x;
     const foxSy = this.fox.scale.y;
@@ -206,14 +225,16 @@ export class Tutorial {
           const slide = u < 0.22 ? 0 : quadIn((u - 0.22) / 0.78);
           this.fox.x = foxX + (outX - foxX) * slide;
         },
-        onDone: () => this.finishEnd(),
+        onDone,
       }),
     );
   }
 
   finishEnd() {
     this._leaving = false;
+    this._coachGone = false;
     this.root.visible = false;
+    this.root.eventMode = "none";
     this.hand.visible = true;
     this.fox.position.set(this._foxX, this._foxY);
     this.fox.scale.set(this._foxSx, this._foxSy);
@@ -241,8 +262,9 @@ export class Tutorial {
 
   canAim(kind) {
     if (!this.active) return true;
-    if (this.stage === `${kind}-demo`) return false;
-    return this._allow[kind];
+    if (this.stage === "play") return true;
+    if (this.stage === `${kind}-demo`) return true;
+    return !!this._allow[kind];
   }
 
   blockingPlay() {
@@ -250,11 +272,36 @@ export class Tutorial {
   }
 
   onAimed(kind) {
-    if (!this.active) return;
-    if (this.stage === kind) this.beginPlay();
+    if (!this.active || this.stage === "play") return;
+    if (this.stage === "mix") {
+      if (kind !== "faucet" && kind !== "platform") return;
+    } else if (
+      this.stage !== kind &&
+      this.stage !== `${kind}-demo`
+    ) {
+      return;
+    }
+    this.dismissCoach();
+    this.beginPlay();
   }
 
   beginDemo(kind) {
+    if (kind === "mix") {
+      const flask = this.game.flasks[0];
+      if (!flask) {
+        this.beginPlay();
+        return;
+      }
+      this._kind = "mix";
+      this.stage = "mix";
+      this._target = flask;
+      this._t = 0;
+      this._allow.faucet = true;
+      this._allow.platform = true;
+      this.overlay.eventMode = "none";
+      this.lift(flask.container);
+      return;
+    }
     const target =
       kind === "faucet"
         ? this.game.faucets[0]
@@ -272,6 +319,7 @@ export class Tutorial {
   }
 
   beginPlay() {
+    this.drop();
     this.stage = "play";
     this._kind = "play";
     this._target = this.game.hud.playBtn;
@@ -279,8 +327,10 @@ export class Tutorial {
     this._allow.faucet = true;
     this._allow.platform = true;
     this.hand.rotation = 0;
+    this.hand.visible = true;
     this.arrow.visible = false;
-    this.lift(this.game.hud.playBtn);
+    this.overlay.eventMode = "none";
+    this.root.eventMode = "none";
   }
 
   update(dt) {
@@ -336,6 +386,12 @@ export class Tutorial {
     const obj = this._target;
     if (!obj?.container) return;
     const p = obj.container.position;
+    if (this.stage === "mix") {
+      this.hand.x = p.x + 10;
+      this.hand.y = p.y + 16 + Math.sin(this._t * cfg.bobSpeed) * cfg.bobAmp;
+      this.hand.rotation = 0;
+      return;
+    }
     const u = Math.sin((this._t / cfg.demoDuration) * Math.PI);
     const a = cfg.handArc * u;
     this.hand.x = p.x + Math.cos(a) * cfg.handRadius;
@@ -346,7 +402,8 @@ export class Tutorial {
   placeArrow() {
     const cfg = config.tutorial;
     const obj = this._target;
-    const show = this.stage !== "play" && obj?.container;
+    const show =
+      this.stage !== "play" && this.stage !== "mix" && obj?.container;
     this.arrow.visible = !!show;
     if (!show) return;
     const p = obj.container.position;
