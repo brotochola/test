@@ -8,7 +8,6 @@ export const config = {
   },
   game: {
     debug: !true,
-    settleDelay: 3,
   },
   world: {
     gravityX: 0,

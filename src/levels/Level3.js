@@ -1,60 +1,40 @@
 import { flaskY, Level } from "./Level.js";
 
 const RED = [255, 45, 40, 255];
-const YELLOW = [255, 230, 30, 255];
-const CYAN = [0, 210, 190, 255];
-const ORANGE = [255, 138, 35, 255];
-const GREEN = [128, 220, 110, 255];
+const BLUE = [45, 70, 255, 255];
+const PURPLE = [150, 58, 148, 255];
 
-const S = 0.85;
-
-// Yellow splits on the flat board. The lower boards start steep enough
-// that each mix drops into the near jar; flattening them dumps into the gap.
+// Boards start tipped outward. Turn both inward so the colors meet in the jar.
 export class Level3 extends Level {
   config = {
-    coins: 100,
+    coins: 75,
     flasks: [
       {
-        x: 6.2,
-        y: flaskY(1, S),
+        x: 4.45,
+        y: flaskY(1),
         type: 1,
-        scale: S,
-        amount: 70,
-        targetColor: ORANGE,
-      },
-      {
-        x: 11.8,
-        y: flaskY(1, S),
-        type: 1,
-        scale: S,
-        amount: 70,
-        targetColor: GREEN,
+        amount: 140,
+        targetColor: PURPLE,
       },
     ],
     faucets: [
       {
-        x: 2.6,
-        y: 26.4,
-        color: RED,
-        amount: 110,
-      },
-      {
-        x: 9,
+        x: 4.3,
         y: 26.6,
-        color: YELLOW,
-        amount: 220,
+        color: RED,
+        amount: 260,
       },
       {
-        x: 15.4,
-        y: 26.4,
-        color: GREEN,
-        amount: 110,
+        x: 15.7,
+        y: 26.6,
+        color: BLUE,
+        amount: 260,
       },
     ],
     platforms: [
-      { type: "short", x: 9, y: 23.6, angle: 0, rotate: false },
-      { type: "short", x: 3.3, y: 14.8, angle: -1.28, rotate: true },
-      { type: "short", x: 14.7, y: 14.8, angle: 1.28, rotate: true },
+      { type: "short", x: 5.5, y: 21.6, angle: 0.42, rotate: true },
+      { type: "short", x: 14.3, y: 21.6, angle: -0.38, rotate: true },
+      { type: "platform", x: 11.1, y: 14.2, angle: 0.78, rotate: false },
     ],
   };
 }

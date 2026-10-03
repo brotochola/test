@@ -19,6 +19,7 @@ import { Tutorial } from "./Tutorial.js";
 import { Level1 } from "./levels/Level1.js";
 import { Level2 } from "./levels/Level2.js";
 import { Level3 } from "./levels/Level3.js";
+import { Level4 } from "./levels/Level4.js";
 import { SoundManager } from "./SoundManager.js";
 
 const WIN = assetUrl("audio/level_won.mp3");
@@ -42,13 +43,12 @@ export class Game {
     this.debug = config.game.debug;
     this.acc = 0;
     this.checkAcc = 0;
-    this.settleAcc = 0;
     this.debugGfx = null;
     this.debugHud = null;
     this.hud = null;
     this.dialog = null;
     this.tutorial = null;
-    this.levels = [new Level1(), new Level2(), new Level3()];
+    this.levels = [new Level1(), new Level2(), new Level3(), new Level4()];
     this.levelIndex = 0;
     this.coins = 0;
     this.awarded = [false, false, false];
@@ -164,7 +164,6 @@ export class Game {
     this.resolved = false;
     this.mode = "design";
     this.checkAcc = 0;
-    this.settleAcc = 0;
     this.acc = 0;
     if (this.dialog) this.dialog.hide();
     const spec = level.config;
@@ -237,7 +236,6 @@ export class Game {
     this.resolved = false;
     this.mode = "design";
     this.checkAcc = 0;
-    this.settleAcc = 0;
     this.acc = 0;
     this.dialog?.hide();
 
@@ -275,7 +273,6 @@ export class Game {
   onWin(n) {
     if (this.won) return;
     this.won = true;
-    this.paused = true;
     this.sound.play(WIN, { volume: 0.7 });
     const first = !this.awarded[this.levelIndex];
     const earned = first && Number.isFinite(n) ? n : 0;
@@ -292,7 +289,7 @@ export class Game {
   }
 
   onLose() {
-    this.paused = true;
+    // this.paused = true;
     this.sound.play(LOSE, { volume: 0.7 });
     this.dialog.show({
       earned: 0,
@@ -398,7 +395,6 @@ export class Game {
     }
     const drawMs = performance.now() - tDraw;
     this.updateFlasks(ticker);
-    this.tickResolve(ticker);
     if (this.fx) this.fx.update(dt);
     this.updateDebug(ticker, n, physMs, drawMs);
   }
@@ -421,26 +417,24 @@ export class Game {
     this.checkAcc += ticker.deltaMS / 1000;
     if (this.checkAcc < config.flask.checkEvery) return;
     this.checkAcc = 0;
-    this.sampleFlasks();
-  }
-
-  faucetsDone() {
+    const { results, n } = this.sampleFlasks();
+    if (this.resolved) return;
+    if (allFlasksPass(results)) {
+      this.resolved = true;
+      this.onWin(n);
+      return;
+    }
     const faucets = this.faucets;
     for (let i = 0; i < faucets.length; i++) {
-      if (faucets[i].emitted < faucets[i].amount) return false;
+      if (faucets[i].emitted < faucets[i].amount) return;
     }
-    return true;
-  }
-
-  tickResolve(ticker) {
-    if (this.resolved || this.won || !this.liquid) return;
-    if (!this.faucetsDone()) return;
-    this.settleAcc += ticker.deltaMS / 1000;
-    if (this.settleAcc < config.game.settleDelay) return;
-    this.resolved = true;
-    const { results, n } = this.sampleFlasks();
-    if (allFlasksPass(results)) this.onWin(n);
-    else this.onLose();
+    let need = 0;
+    const flasks = this.flasks;
+    for (let i = 0; i < flasks.length; i++) need += flasks[i].need;
+    if (this.liquid.particleCount() < need) {
+      this.resolved = true;
+      this.onLose();
+    }
   }
 
   updateDebug(ticker, n, physMs, drawMs) {
