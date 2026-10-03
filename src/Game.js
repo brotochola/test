@@ -2,11 +2,13 @@ import {
   Application,
   Container,
   Graphics,
+  Rectangle,
   Sprite,
   Text,
 } from "./vendor/pixi.min.mjs";
 import { config } from "./config.js";
 import { assetUrl, loadFont, preloadAssets } from "./assets.js";
+import { bounceTap } from "./ui.js";
 import { Enclosure } from "./Enclosure.js";
 import { Platform } from "./Platform.js";
 import { Faucet } from "./Faucet.js";
@@ -56,7 +58,9 @@ export class Game {
     this.won = false;
     this.resolved = false;
     this.mode = "design";
-    this.tutorialSeen = false;
+    this.tutorialFaucetSeen = false;
+    this.tutorialPlankSeen = false;
+    this.splash = null;
     this.sound = new SoundManager();
     this._onResize = () => this.layout();
     this._onVisibility = () => this.onVisibility();
@@ -125,8 +129,44 @@ export class Game {
     this.hud = new Hud(this);
     this.tutorial = new Tutorial(this);
     this.dialog = new Dialog(this);
+    this.showSplash();
     this.loadLevel(this.levels[this.levelIndex]);
     this.app.ticker.add((ticker) => this.tick(ticker));
+  }
+
+  showSplash() {
+    const splash = new Container();
+    splash.zIndex = config.zIndex.splash;
+    splash.eventMode = "static";
+    splash.hitArea = new Rectangle(0, 0, config.app.width, config.app.height);
+
+    const img = Sprite.from(assetUrl("splash-screen.png"));
+    img.width = config.app.width;
+    img.height = config.app.height;
+    img.eventMode = "none";
+    splash.addChild(img);
+
+    const scale = config.tutorial.splashPlayScale;
+    const play = Sprite.from(assetUrl("play.png"));
+    play.anchor.set(0.5);
+    play.scale.set(scale);
+    play.position.set(config.app.width / 2, config.tutorial.splashPlayY);
+    play.eventMode = "static";
+    play.cursor = "pointer";
+    play.on("pointertap", () => {
+      bounceTap(this, play, () => this.dismissSplash(), scale);
+    });
+    splash.addChild(play);
+
+    this.splash = splash;
+    this.app.stage.addChild(splash);
+  }
+
+  dismissSplash() {
+    if (!this.splash?.visible) return;
+    this.splash.visible = false;
+    this.splash.eventMode = "none";
+    this.maybeStartTutorial();
   }
 
   onVisibility() {
@@ -197,7 +237,16 @@ export class Game {
       this.hud.setPlaying(false);
       this.hud.setPlayEnabled(true);
     }
-    if (this.levelIndex === 0 && !this.tutorialSeen) this.tutorial?.start();
+    this.maybeStartTutorial();
+  }
+
+  maybeStartTutorial() {
+    if (this.splash?.visible) return;
+    if (this.levelIndex === 0 && !this.tutorialFaucetSeen) {
+      this.tutorial?.start("faucet");
+    } else if (this.levelIndex === 1 && !this.tutorialPlankSeen) {
+      this.tutorial?.start("platform");
+    }
   }
 
   canAim(kind) {
@@ -219,7 +268,8 @@ export class Game {
     this.sound.unlock();
     if (this.mode === "play" || this.paused) return;
     if (this.tutorial?.blockingPlay()) return;
-    this.tutorialSeen = true;
+    if (this.levelIndex === 0) this.tutorialFaucetSeen = true;
+    else if (this.levelIndex === 1) this.tutorialPlankSeen = true;
     this.tutorial?.end();
     this.mode = "play";
     this.hud.setPlaying(true);

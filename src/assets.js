@@ -24,6 +24,10 @@ export const ASSET_FILES = [
   "fox-happy.png",
   "fox-cta.png",
   "fox-sad.png",
+  "splash-screen.png",
+  "fox-guide.png",
+  "speech-bubble.png",
+  "rotating-arrow.png",
 ];
 
 export function assetUrl(file) {

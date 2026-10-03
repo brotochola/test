@@ -66,6 +66,7 @@ export class Hud {
     this.playBtn.eventMode = "static";
     this.playBtn.cursor = "pointer";
     this.playBtn.on("pointertap", () => {
+      if (game.splash?.visible) return;
       if (game.mode === "play" || game.paused) return;
       if (game.tutorial?.blockingPlay()) return;
       bounceTap(game, this.playBtn, () => game.play(), BTN_SCALE);

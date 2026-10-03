@@ -79,6 +79,7 @@ export const config = {
     hud: 10,
     dialog: 11,
     tutorial: 12,
+    splash: 20,
   },
   tutorial: {
     handW: 88,
@@ -88,6 +89,27 @@ export const config = {
     bobSpeed: 3,
     handRadius: 70,
     handArc: Math.PI,
+    foxW: 180,
+    foxX: 12,
+    foxPad: 16,
+    bubbleW: 500,
+    bubbleOverlap: 12,
+    bubbleFontSize: 22,
+    bubblePadX: 36,
+    bubblePadY: 18,
+    dimAlpha: 0.55,
+    holePad: 24,
+    arrowW: 160,
+    arrowPulse: 0.08,
+    arrowSpeed: 3,
+    splashPlayY: 1140,
+    splashPlayScale: 0.5,
+    copy: {
+      faucet:
+        "Welcome to Potion Mix! Fill each flask with the right amount and color. Rotate the faucet to aim.",
+      platform:
+        "You can also rotate planks to guide the liquid into the flask.",
+    },
   },
   fx: {
     maxCount: 256,
