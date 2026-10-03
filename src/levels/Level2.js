@@ -26,7 +26,7 @@ export class Level2 extends Level {
     ],
     platforms: [
       // { type: "short", x: 9, y: 23, angle: -0.18, rotate: false },
-      { type: "platform", x: 15, y: 14.4, angle: 0.92, rotate: true },
+      { type: "short", x: 9, y: 22, angle: 0.92, rotate: true },
     ],
   };
 }

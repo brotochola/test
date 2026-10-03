@@ -1,6 +1,7 @@
 import { Container, Graphics, Sprite, Text } from "./vendor/pixi.min.mjs";
 import { config } from "./config.js";
 import { assetUrl } from "./assets.js";
+import { tween } from "./ui.js";
 
 export class Tutorial {
   constructor(game) {
@@ -15,6 +16,12 @@ export class Tutorial {
     this._arrowScale = 1;
     this._lifted = null;
     this._liftedParent = null;
+    this._tweens = [];
+    this._copy = "";
+    this._typeI = 0;
+    this._typeAcc = 0;
+    this._typing = false;
+    this._leaving = false;
 
     const cfg = config.tutorial;
     this.root = new Container();
@@ -38,6 +45,10 @@ export class Tutorial {
     fitWidth(this.fox, cfg.foxW);
     this.fox.position.set(430, config.app.height - cfg.foxPad);
     this.fox.scale.x *= -1;
+    this._foxX = this.fox.x;
+    this._foxY = this.fox.y;
+    this._foxSx = this.fox.scale.x;
+    this._foxSy = this.fox.scale.y;
     this.root.addChild(this.fox);
 
     this.bubble = Sprite.from(assetUrl("speech-bubble.png"));
@@ -46,6 +57,8 @@ export class Tutorial {
     fitWidth(this.bubble, cfg.bubbleW);
     // this.bubble.scale.x *= -1;
     this.bubble.position.set(cfg.bubbleX, cfg.bubbleY);
+    this._bubbleSx = this.bubble.scale.x;
+    this._bubbleSy = this.bubble.scale.y;
     this.root.addChild(this.bubble);
 
     this.speech = new Text({
@@ -87,14 +100,56 @@ export class Tutorial {
 
   start(kind) {
     this.drop();
+    this.stopTweens();
+    this._leaving = false;
     this.active = true;
     this.root.visible = true;
     this._t = 0;
     this._allow.faucet = false;
     this._allow.platform = false;
-    this.speech.text =
-      config.tutorial.copy[kind] ?? config.tutorial.copy.faucet;
+    this._copy = config.tutorial.copy[kind] ?? config.tutorial.copy.faucet;
+    this.speech.text = "";
+    this.speech.alpha = 1;
+    this.speech.scale.set(1);
+    this._typeI = 0;
+    this._typeAcc = 0;
+    this._typing = false;
+    this.hand.visible = true;
+    this.overlay.alpha = 1;
+    this.overlay.eventMode = "static";
+    this.fox.position.set(this._foxX, this._foxY);
+    this.fox.scale.set(0);
+    this.bubble.scale.set(0);
+    this.popIn();
     this.beginDemo(kind);
+  }
+
+  popIn() {
+    const cfg = config.tutorial;
+    this._tweens.push(
+      tween(this.game.app, {
+        duration: cfg.popDuration,
+        ease: bounceOut,
+        onUpdate: (u) => this.fox.scale.set(this._foxSx * u, this._foxSy * u),
+      }),
+    );
+    this._tweens.push(
+      tween(this.game.app, {
+        delay: cfg.bubbleDelay,
+        duration: cfg.popDuration,
+        ease: bounceOut,
+        onUpdate: (u) =>
+          this.bubble.scale.set(this._bubbleSx * u, this._bubbleSy * u),
+        onDone: () => {
+          this._typing = true;
+        },
+      }),
+    );
+  }
+
+  stopTweens() {
+    for (let i = 0; i < this._tweens.length; i++) this._tweens[i]();
+    this._tweens.length = 0;
   }
 
   end() {
@@ -105,9 +160,67 @@ export class Tutorial {
     this._kind = null;
     this._allow.faucet = true;
     this._allow.platform = true;
-    this.root.visible = false;
+    this._typing = false;
     this.arrow.visible = false;
+    this.hand.visible = false;
     this.hand.rotation = 0;
+    this.overlay.eventMode = "none";
+    if (!this.root.visible || this._leaving) return;
+    this.stopTweens();
+    this._leaving = true;
+    this.popOut();
+  }
+
+  popOut() {
+    const cfg = config.tutorial;
+    const foxSx = this.fox.scale.x;
+    const foxSy = this.fox.scale.y;
+    const bSx = this.bubble.scale.x;
+    const bSy = this.bubble.scale.y;
+    const overlayA = this.overlay.alpha;
+    this._tweens.push(
+      tween(this.game.app, {
+        duration: cfg.popDuration * 0.7,
+        ease: quadIn,
+        onUpdate: (u) => {
+          const k = 1 - u;
+          this.bubble.scale.set(bSx * k, bSy * k);
+          this.speech.scale.set(k);
+          this.speech.alpha = k;
+          this.overlay.alpha = overlayA * k;
+        },
+      }),
+    );
+    const foxX = this.fox.x;
+    const outX = config.app.width + Math.abs(this.fox.width) + 24;
+    this._tweens.push(
+      tween(this.game.app, {
+        delay: cfg.bubbleDelay,
+        duration: 0.5,
+        onUpdate: (u) => {
+          const squash = u < 0.3 ? Math.sin((u / 0.3) * Math.PI) : 0;
+          this.fox.scale.set(
+            foxSx * (1 + 0.2 * squash),
+            foxSy * (1 - 0.25 * squash),
+          );
+          const slide = u < 0.22 ? 0 : quadIn((u - 0.22) / 0.78);
+          this.fox.x = foxX + (outX - foxX) * slide;
+        },
+        onDone: () => this.finishEnd(),
+      }),
+    );
+  }
+
+  finishEnd() {
+    this._leaving = false;
+    this.root.visible = false;
+    this.hand.visible = true;
+    this.fox.position.set(this._foxX, this._foxY);
+    this.fox.scale.set(this._foxSx, this._foxSy);
+    this.bubble.scale.set(this._bubbleSx, this._bubbleSy);
+    this.speech.scale.set(1);
+    this.speech.alpha = 1;
+    this.overlay.alpha = 1;
   }
 
   lift(node) {
@@ -178,6 +291,19 @@ export class Tutorial {
     }
     this.placeHand();
     this.placeArrow();
+    this.stepType(dt);
+  }
+
+  stepType(dt) {
+    if (!this._typing) return;
+    const rate = config.tutorial.typeRate;
+    this._typeAcc += dt;
+    while (this._typeAcc >= rate && this._typeI < this._copy.length) {
+      this._typeAcc -= rate;
+      this._typeI += 1;
+      this.speech.text = this._copy.slice(0, this._typeI);
+    }
+    if (this._typeI >= this._copy.length) this._typing = false;
   }
 
   stepDemo() {
@@ -236,4 +362,17 @@ function fitWidth(sprite, w) {
   const th = sprite.texture.height || 1;
   sprite.width = w;
   sprite.height = w * (th / tw);
+}
+
+function quadIn(t) {
+  return t * t;
+}
+
+function bounceOut(t) {
+  const n1 = 7.5625;
+  const d1 = 2.75;
+  if (t < 1 / d1) return n1 * t * t;
+  if (t < 2 / d1) return n1 * (t -= 1.5 / d1) * t + 0.75;
+  if (t < 2.5 / d1) return n1 * (t -= 2.25 / d1) * t + 0.9375;
+  return n1 * (t -= 2.625 / d1) * t + 0.984375;
 }

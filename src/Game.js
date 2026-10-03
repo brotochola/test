@@ -140,7 +140,7 @@ export class Game {
     splash.eventMode = "static";
     splash.hitArea = new Rectangle(0, 0, config.app.width, config.app.height);
 
-    const img = Sprite.from(assetUrl("splash-screen.png"));
+    const img = Sprite.from(assetUrl("splash-screen.jpg"));
     img.width = config.app.width;
     img.height = config.app.height;
     img.eventMode = "none";

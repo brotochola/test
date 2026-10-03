@@ -68,7 +68,7 @@ export class Dialog {
     this.progress = label("", 22, config.ui.ink);
     this.dots = new Graphics();
     this.earned = label("", config.ui.fontSize, config.ui.orange);
-    this.demo = label("demo rewards", 18, config.ui.purple);
+    this.demo = label("(demo rewards)", 22, config.ui.purple);
     this.card.addChild(
       this.title,
       this.progress,
@@ -101,19 +101,39 @@ export class Dialog {
     game.app.stage.addChild(this.root);
   }
 
-  layoutCard() {
+  layoutCard(lost) {
     const h = this.panel.height;
     const top = -h / 2;
     const bot = h / 2;
     this.fox.position.set(0, top - this.foxHappy.height * 0.38);
-    this.title.y = top + 58;
-    this.progress.y = this.title.y + 46;
-    this.dots.position.set(0, this.progress.y + 34);
+    this.title.style.fontSize = lost ? 52 : config.ui.titleSize;
+    this.progress.style.fontSize = lost ? 28 : 22;
+    this.title.y = top + (lost ? 108 : 58);
+    this.progress.y = this.title.y + (lost ? 56 : 46);
+    this.dots.position.set(0, this.progress.y + (lost ? 40 : 34));
     this.earned.y = this.dots.y + 34;
-    this.demo.y = this.earned.y + 30;
-    this.next.root.y = bot - 74;
-    this.again.root.y = this.next.root.y - BTN_H - BTN_GAP;
+    this.demo.y = this.earned.y;
+    this.next.root.y = bot - (lost ? 118 : 74);
+    this.again.root.y = lost
+      ? this.next.root.y
+      : this.next.root.y - BTN_H - BTN_GAP;
     this.ctaNote.y = bot + 22;
+  }
+
+  layoutReward(earned, lost) {
+    const show = !lost && earned > 0;
+    this.earned.visible = show;
+    this.demo.visible = show;
+    if (!show) {
+      this.earned.x = 0;
+      this.demo.x = 0;
+      return;
+    }
+    this.earned.text = `+${earned}`;
+    const gap = 10;
+    const w = this.earned.width + gap + this.demo.width;
+    this.earned.x = -w / 2 + this.earned.width / 2;
+    this.demo.x = w / 2 - this.demo.width / 2;
   }
 
   onNext() {
@@ -140,14 +160,10 @@ export class Dialog {
         ? "All mixed!"
         : "Level complete!";
     this.progress.text = `Level ${level} of ${levels}`;
-    this.earned.visible = !lost;
-    this.demo.visible = !lost;
-    this.earned.text = earned > 0 ? `+${earned}` : "Already collected";
+    this.layoutCard(lost);
+    this.layoutReward(earned, lost);
     this.next.root.visible = !lost;
     this.next.text.text = last ? "Explore Scrambly" : "Next";
-    this.again.root.y = lost
-      ? this.next.root.y
-      : this.next.root.y - BTN_H - BTN_GAP;
     this.again.root.scale.set(1);
     this.next.root.scale.set(1);
     drawDots(this.dots, level, levels);
@@ -208,7 +224,9 @@ export class Dialog {
     this.next.root.visible = true;
     this.earned.visible = true;
     this.demo.visible = true;
-    this.again.root.y = this.next.root.y - BTN_H - BTN_GAP;
+    this.earned.x = 0;
+    this.demo.x = 0;
+    this.layoutCard();
   }
 
   bounceTap(node, fn) {

@@ -147,7 +147,7 @@ export class Flask extends GameObject {
     const coins = Math.min(n, this.need);
     this.countText.text = `${coins}/${this.need}`;
     const delta = n - this._lastN;
-    console.log("delta", delta);
+
     if (delta > 0) {
       for (let i = 0; i < delta; i++) {
         if (!this.game.fx) continue;
