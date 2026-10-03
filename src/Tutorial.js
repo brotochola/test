@@ -13,6 +13,8 @@ export class Tutorial {
     this._target = null;
     this._allow = { faucet: false, platform: false };
     this._arrowScale = 1;
+    this._lifted = null;
+    this._liftedParent = null;
 
     const cfg = config.tutorial;
     this.root = new Container();
@@ -20,25 +22,30 @@ export class Tutorial {
     this.root.eventMode = "passive";
     this.root.visible = false;
 
-    this.overlay = new Graphics();
+    this.overlay = new Graphics()
+      .rect(0, 0, config.app.width, config.app.height)
+      .fill({ color: config.ui.dim, alpha: cfg.dimAlpha });
     this.overlay.eventMode = "static";
     this.root.addChild(this.overlay);
 
+    this.spotlight = new Container();
+    this.spotlight.eventMode = "passive";
+    this.root.addChild(this.spotlight);
+
     this.fox = Sprite.from(assetUrl("fox-guide.png"));
-    this.fox.anchor.set(0, 1);
+    this.fox.anchor.set(1, 1);
     this.fox.eventMode = "none";
     fitWidth(this.fox, cfg.foxW);
-    this.fox.position.set(cfg.foxX, config.app.height - cfg.foxPad);
+    this.fox.position.set(430, config.app.height - cfg.foxPad);
+    this.fox.scale.x *= -1;
     this.root.addChild(this.fox);
 
     this.bubble = Sprite.from(assetUrl("speech-bubble.png"));
-    this.bubble.anchor.set(0, 0.5);
+    this.bubble.anchor.set(0.5);
     this.bubble.eventMode = "none";
     fitWidth(this.bubble, cfg.bubbleW);
-    this.bubble.position.set(
-      this.fox.x + this.fox.width - cfg.bubbleOverlap,
-      this.fox.y - this.fox.height * 0.55,
-    );
+    // this.bubble.scale.x *= -1;
+    this.bubble.position.set(cfg.bubbleX, cfg.bubbleY);
     this.root.addChild(this.bubble);
 
     this.speech = new Text({
@@ -55,10 +62,7 @@ export class Tutorial {
     });
     this.speech.anchor.set(0.5);
     this.speech.eventMode = "none";
-    this.speech.position.set(
-      this.bubble.x + this.bubble.width * 0.54,
-      this.bubble.y - cfg.bubblePadY,
-    );
+    this.speech.position.set(cfg.bubbleX, cfg.bubbleY - cfg.bubblePadY);
     this.root.addChild(this.speech);
 
     this.arrow = Sprite.from(assetUrl("rotating-arrow.png"));
@@ -82,6 +86,7 @@ export class Tutorial {
   }
 
   start(kind) {
+    this.drop();
     this.active = true;
     this.root.visible = true;
     this._t = 0;
@@ -93,6 +98,7 @@ export class Tutorial {
   }
 
   end() {
+    this.drop();
     this.active = false;
     this.stage = null;
     this._target = null;
@@ -102,7 +108,22 @@ export class Tutorial {
     this.root.visible = false;
     this.arrow.visible = false;
     this.hand.rotation = 0;
-    this.overlay.clear();
+  }
+
+  lift(node) {
+    this.drop();
+    if (!node) return;
+    this._lifted = node;
+    this._liftedParent = node.parent;
+    this.spotlight.addChild(node);
+  }
+
+  drop() {
+    const node = this._lifted;
+    if (!node) return;
+    this._liftedParent?.addChild(node);
+    this._lifted = null;
+    this._liftedParent = null;
   }
 
   canAim(kind) {
@@ -134,6 +155,7 @@ export class Tutorial {
     this._target = target;
     this._saved = kind === "faucet" ? target.aim : target.body.GetAngle();
     this._t = 0;
+    this.lift(target.container);
   }
 
   beginPlay() {
@@ -145,6 +167,7 @@ export class Tutorial {
     this._allow.platform = true;
     this.hand.rotation = 0;
     this.arrow.visible = false;
+    this.lift(this.game.hud.playBtn);
   }
 
   update(dt) {
@@ -155,7 +178,6 @@ export class Tutorial {
     }
     this.placeHand();
     this.placeArrow();
-    // this.drawHole();
   }
 
   stepDemo() {
@@ -206,30 +228,6 @@ export class Tutorial {
     const s = 1 + Math.sin(this._t * cfg.arrowSpeed) * cfg.arrowPulse;
     this.arrow.scale.set(this._arrowScale * s);
     this.arrow.scale.y *= -1;
-  }
-
-  drawHole() {
-    const g = this.overlay;
-    g.clear();
-    const w = config.app.width;
-    const h = config.app.height;
-    const fill = { color: config.ui.dim, alpha: config.tutorial.dimAlpha };
-    const pad = config.tutorial.holePad;
-    const node =
-      this.stage === "play" ? this.game.hud.playBtn : this._target?.container;
-    if (!node) {
-      g.rect(0, 0, w, h).fill(fill);
-      return;
-    }
-    const b = node.getBounds();
-    const hx = Math.max(0, b.x - pad);
-    const hy = Math.max(0, b.y - pad);
-    const hw = Math.max(0, Math.min(w - hx, b.width + pad * 2));
-    const hh = Math.max(0, Math.min(h - hy, b.height + pad * 2));
-    if (hy > 0) g.rect(0, 0, w, hy).fill(fill);
-    if (hy + hh < h) g.rect(0, hy + hh, w, h - hy - hh).fill(fill);
-    if (hx > 0 && hh > 0) g.rect(0, hy, hx, hh).fill(fill);
-    if (hx + hw < w && hh > 0) g.rect(hx + hw, hy, w - hx - hw, hh).fill(fill);
   }
 }
 
