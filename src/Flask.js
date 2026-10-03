@@ -88,7 +88,7 @@ export class Flask extends GameObject {
   }
 
   get fillCount() {
-    return this._lastN;
+    return Math.min(this._lastN, this.need);
   }
 
   resetCount() {
@@ -144,8 +144,10 @@ export class Flask extends GameObject {
   sample(liquid) {
     const aabb = this.fillAabb();
     const { n, rgb } = liquid.avgColorInAabb(aabb);
-    this.countText.text = `${n}/${this.need}`;
+    const coins = Math.min(n, this.need);
+    this.countText.text = `${coins}/${this.need}`;
     const delta = n - this._lastN;
+    console.log("delta", delta);
     if (delta > 0) {
       for (let i = 0; i < delta; i++) {
         if (!this.game.fx) continue;
@@ -159,6 +161,8 @@ export class Flask extends GameObject {
         if (Math.random() > 0.9)
           this.game.fx.burst(x, y, { ...config.fx.flask, count });
       }
+    }
+    if (coins > Math.min(this._lastN, this.need)) {
       this.game.sound.play(COIN, { ascendingPitch: true, volume: 0.4 });
       this.game.hud?.flyCoin(this.container.x, this.container.y);
     }

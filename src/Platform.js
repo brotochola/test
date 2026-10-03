@@ -11,12 +11,21 @@ export function colliderHalf(size, margin) {
 export class Platform extends GameObject {
   constructor(game, options) {
     const lf = window.liquidfun;
-    const art = config.platform.kinds[options.type];
-    if (!art) throw new Error(`unknown platform type ${options.type}`);
-    const ppm = config.world.pixelsPerMeter;
-    const width = art.w / ppm;
-    const height = art.h / ppm;
+    const kind = config.platform.kinds[options.type];
+    if (!kind) throw new Error(`unknown platform type ${options.type}`);
     const rotate = !!options.rotate;
+    const src = !rotate && kind.fixedSrc ? kind.fixedSrc : kind.src;
+    const view = Sprite.from(assetUrl(src));
+    view.anchor.set(0.5);
+    const h = !rotate ? config.platform.h * 1.5 : config.platform.h;
+    const tw = view.texture.width || 1;
+    const th = view.texture.height || 1;
+    const w = h * (tw / th);
+    view.width = w;
+    view.height = h;
+    const ppm = config.world.pixelsPerMeter;
+    const width = w / ppm;
+    const height = (rotate ? h : h / 2) / ppm;
     const bodyType = rotate ? lf.b2_kinematicBody : lf.b2_staticBody;
     const margin = config.box.margin;
     const hx = colliderHalf(width, margin);
@@ -46,11 +55,7 @@ export class Platform extends GameObject {
     this._drag = false;
     this._pointer = -1;
 
-    this.view = Sprite.from(assetUrl(art.src));
-    this.view.anchor.set(0.5);
-    this.view.width = art.w;
-    this.view.height = art.h;
-    if (!rotate) this.view.tint = 0x9aa3ad;
+    this.view = view;
     this.container.addChild(this.view);
 
     if (rotate) {
@@ -58,10 +63,10 @@ export class Platform extends GameObject {
       this.container.eventMode = "static";
       this.container.cursor = "pointer";
       this.container.hitArea = new Rectangle(
-        -art.w / 2 - pad,
-        -art.h / 2 - pad,
-        art.w + pad * 2,
-        art.h + pad * 2,
+        -w / 2 - pad,
+        -h / 2 - pad,
+        w + pad * 2,
+        h + pad * 2,
       );
       this._onDown = (e) => {
         if (!this.game.canAim("platform")) return;

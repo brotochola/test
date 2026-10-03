@@ -28,9 +28,13 @@ export const config = {
     margin: 0.02,
   },
   platform: {
+    h: 50,
     kinds: {
-      platform: { src: "platform.png", w: 8.807 * 50, h: 50 },
-      short: { src: "short_platform.png", w: 5.669 * 50, h: 50 },
+      platform: { src: "platform.png", fixedSrc: "fixed-platform.png" },
+      short: {
+        src: "short_platform.png",
+        fixedSrc: "short-fixed-platform.png",
+      },
     },
   },
   level: {

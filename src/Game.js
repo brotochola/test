@@ -280,6 +280,7 @@ export class Game {
       this.coins += earned;
       this.awarded[this.levelIndex] = true;
     }
+    this.hud?.setCoins(this.coins);
     this.dialog.show({
       earned,
       last: this.levelIndex >= this.levels.length - 1,
@@ -408,7 +409,9 @@ export class Game {
       results.push(result);
       n += flasks[i].fillCount;
     }
-    this.hud.setCoins((this.coins ?? 0) + n);
+    // Live total previews this pour. Once banked, the pour is already in this.coins.
+    const preview = this.awarded[this.levelIndex] ? 0 : n;
+    this.hud.setCoins((this.coins ?? 0) + preview);
     return { results, n };
   }
 
